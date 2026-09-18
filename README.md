@@ -49,6 +49,36 @@ t report T003
 submit T003                :: 飞书表格 dry-run，只看要写什么
 ```
 
+## 两台电脑一起跑
+
+台账（`main`）和每道题的代码分支（`t00X/base|a|b`）都在 GitHub 上，所以在另一台机器上
+`git pull`（或重新 clone）之后，两边的题目都能看见、都能接着跑。
+
+**在第二台机器上开始跑某道已经建好的题**（例如 T003）：
+
+```bat
+git pull
+t reset T003 --workspace D:\work\T003
+```
+
+`reset` 会把 `t003/base` 的内容铺到工作区、顺手把工作区初始化成 git 仓库
+（以后重置就走 `reset --hard` + `clean -fdx`），然后就可以照常跑 A / B。
+
+**轨迹在另一台机器上跑出来的**（例如 A 在 A 机、B 在 B 机）：
+
+```bat
+:: 在跑出轨迹的那台机器上，先找到文件
+uv run python tools/find_trajectory.py <SessionID>
+:: 把那两个 jsonl 拷到这台机器，然后登记进台账
+t set T003 --a-session <A-SessionID> --b-session <B-SessionID> ^
+           --a-trajectory D:\from-other-pc\A.jsonl ^
+           --b-trajectory D:\from-other-pc\B.jsonl
+```
+
+登记完 `t report T003` 就会把两条轨迹输出成**可点击直达本机文件**的链接。
+注意：一台机器只能提供自己跑出来的产物快照，跨机器的那次跑要由**跑它的那台机器**提交
+产物快照分支（A、B 的快照分支都必须在同一个远端仓库里，父提交是同一个 `t00X/base`）。
+
 ## 每道题的标准流程
 
 1. **准备初始环境**：把题目要用的工作区准备好（干净、可运行），然后

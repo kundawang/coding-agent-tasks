@@ -415,6 +415,22 @@ def cmd_set(args):
             meta["runs"][role]["session_id"] = sid.strip()
             changed.append(f"runs.{role}.session_id")
 
+    # 轨迹是在另一台机器上跑的：把那边导出的 jsonl 拷进仓库，report 里就是可点击的本机文件
+    for role, src in (("A", args.a_trajectory), ("B", args.b_trajectory)):
+        if not src:
+            continue
+        if not os.path.exists(src):
+            raise SystemExit(f"找不到轨迹文件 {src}")
+        sid = (meta["runs"][role].get("session_id") or "").strip()
+        name = f"{role}-{sid}.jsonl" if sid else f"{role}-{os.path.basename(src)}"
+        traj_dir = os.path.join(task_dir(task_id), "trajectories")
+        os.makedirs(traj_dir, exist_ok=True)
+        dest = os.path.join(traj_dir, name)
+        shutil.copy2(src, dest)
+        meta["runs"][role]["trajectory_local"] = dest
+        meta["runs"][role]["trajectory_source"] = os.path.abspath(src)
+        changed.append(f"runs.{role}.trajectory_local")
+
     if not changed:
         raise SystemExit("没有要改的内容；用 python tools/task.py set --help 看可用参数")
 
@@ -437,6 +453,7 @@ def cmd_reset(args):
         )
 
     if workspace_git_reset(args.workspace):
+        write_workspace_record(task_id, args.workspace)
         print(f"工作区已 git reset --hard 回最初提交，未跟踪文件已清掉，可以跑 B 了。")
         return 0
 
@@ -472,6 +489,12 @@ def cmd_reset(args):
     extract = subprocess.run(["tar", "-x", "-C", args.workspace], input=archive.stdout, capture_output=True)
     if extract.returncode != 0:
         raise SystemExit(f"解包失败: {extract.stderr.decode(errors='replace')[:300]}")
+
+    # 换一台机器时这里就是"把这道题的初始环境拉下来"：建好并记为 git 仓库，
+    # 下次 reset 直接走 reset --hard + clean
+    if ensure_workspace_repo(args.workspace):
+        print(f"已把工作区初始化为 git 仓库: {args.workspace}")
+    write_workspace_record(task_id, args.workspace)
 
     print(f"工作区已重置到初始环境 {base} ({load_meta(task_id)['initial_snapshot']['sha']})")
     print("node_modules / venv / 构建产物等未跟踪文件已清掉，可以跑 B 了。")
@@ -637,6 +660,10 @@ def build_parser():
     st.add_argument("--b-recording", dest="b_recording")
     st.add_argument("--a-session", dest="a_session", help="A 的 SessionID（轨迹不在本机时用）")
     st.add_argument("--b-session", dest="b_session", help="B 的 SessionID")
+    st.add_argument("--a-trajectory", dest="a_trajectory",
+                    help="从另一台机器导出的 A 轨迹 jsonl，拷进仓库")
+    st.add_argument("--b-trajectory", dest="b_trajectory",
+                    help="从另一台机器导出的 B 轨迹 jsonl，拷进仓库")
     st.add_argument("--no-push", dest="push", action="store_false")
     st.set_defaults(push=True, func=cmd_set)
 
