@@ -409,11 +409,15 @@ def cmd_list(_args):
 
 def cmd_push(args):
     task_id = (args.id or "").upper()
-    refs = ["main"]
     if task_id:
-        refs = list(branches(task_id).values()) + ["main"]
+        refs = [
+            branch
+            for branch in branches(task_id).values()
+            if git("rev-parse", "--verify", "--quiet", branch, check=False)
+        ]
+        refs.append("main")
     else:
-        refs = ["main", "--all"]
+        refs = ["--all"]
     result = subprocess.run(["git", "push", "-u", "origin", *refs], cwd=REPO,
                             capture_output=True, text=True, encoding="utf-8", errors="replace")
     print(result.stdout.strip() or result.stderr.strip())
