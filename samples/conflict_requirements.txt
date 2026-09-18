@@ -1,0 +1,2 @@
+service-a =1.0.0
+service-b =1.0.0
