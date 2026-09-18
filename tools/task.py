@@ -158,8 +158,7 @@ def commit_all(message, cwd=REPO):
 
 def ensure_workspace_repo(workspace):
     """工作区要是个 git 仓库：模型跑完可以自己提交产物，重置也能走 reset --hard。"""
-    git_dir = os.path.join(workspace, ".git")
-    if not os.path.isdir(git_dir):
+    if not is_git_repo(workspace):
         git("init", "-q", "-b", "main", cwd=workspace)
         if not git("config", "user.name", cwd=workspace, check=False):
             git("config", "user.name", "kundawang", cwd=workspace)
@@ -169,9 +168,13 @@ def ensure_workspace_repo(workspace):
     return False
 
 
+def is_git_repo(path):
+    return bool(git("rev-parse", "--git-dir", cwd=path, check=False))
+
+
 def workspace_git_reset(workspace):
     """把工作区 git 仓库硬重置到最初那次提交，并清掉未跟踪文件。"""
-    if not os.path.isdir(os.path.join(workspace, ".git")):
+    if not is_git_repo(workspace):
         return False
     roots = git("rev-list", "--max-parents=0", "HEAD", cwd=workspace, check=False).split()
     if not roots:
