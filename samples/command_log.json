@@ -1,0 +1,12 @@
+{
+  "seed": 20260918,
+  "note": "同 seed + 同指令序列，重放结果必须一致",
+  "commands": [
+    {"tick": 5,   "op": "select",  "units": ["player-worker-0", "player-worker-1"]},
+    {"tick": 10,  "op": "harvest", "target": [6, 6]},
+    {"tick": 60,  "op": "select",  "units": ["player-rifle-0"]},
+    {"tick": 70,  "op": "move",    "to": [14, 12]},
+    {"tick": 200, "op": "attack",  "target": "enemy-rifle-0"},
+    {"tick": 260, "op": "train",   "unit": "worker"}
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "grid": {"width": 40, "height": 24, "cell": 24},
+  "obstacles": [
+    [10, 8], [10, 9], [10, 10], [10, 14], [10, 15], [10, 16],
+    [20, 4], [20, 5], [20, 18], [20, 19],
+    [30, 8], [30, 9], [30, 14], [30, 15]
+  ],
+  "resource_nodes": [[6, 6], [6, 18], [33, 6], [33, 18]],
+  "harvest": {"amount": 10, "ticks_per_trip": 40},
+  "player": {"spawn": [3, 12], "units": ["worker", "worker", "rifle"], "resources": 120},
+  "enemy":  {"spawn": [36, 12], "units": ["worker", "rifle", "rifle"], "resources": 100},
+  "win_condition": "destroy_all_enemy_units",
+  "seed": 20260918
+}

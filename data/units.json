@@ -1,0 +1,10 @@
+{
+  "tick_rate": 20,
+  "attack_cooldown_ticks": 20,
+  "units": {
+    "worker": {"name": "工兵",   "cost": 25,  "build_ticks": 100, "hp": 40,  "damage": 3,  "range": 1, "speed": 1.2, "armor": 0, "harvest": true},
+    "rifle":  {"name": "步枪兵", "cost": 50,  "build_ticks": 150, "hp": 60,  "damage": 8,  "range": 3, "speed": 1.4, "armor": 0},
+    "gunner": {"name": "机枪手", "cost": 80,  "build_ticks": 220, "hp": 90,  "damage": 5,  "range": 2, "speed": 0.9, "armor": 1, "splash": true},
+    "tank":   {"name": "战车",   "cost": 140, "build_ticks": 360, "hp": 200, "damage": 20, "range": 2, "speed": 0.8, "armor": 3}
+  }
+}
