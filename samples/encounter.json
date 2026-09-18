@@ -1,0 +1,29 @@
+{
+  "name": "练习场",
+  "player": {
+    "name": "你",
+    "hp": 80,
+    "maxHp": 80,
+    "energyPerTurn": 3,
+    "handSize": 5,
+    "deck": [
+      "strike", "strike", "strike", "strike", "strike",
+      "defend", "defend", "defend", "defend",
+      "quick_jab", "twin_fang", "brace", "spot_weakness",
+      "flex", "pommel_strike", "bash"
+    ]
+  },
+  "enemy": {
+    "name": "陪练机",
+    "hp": 70,
+    "maxHp": 70,
+    "energyPerTurn": 3,
+    "handSize": 5,
+    "deck": [
+      "strike", "strike", "strike", "strike",
+      "heavy_blow", "heavy_blow",
+      "cleave", "cleave",
+      "iron_wave", "iron_wave"
+    ]
+  }
+}
