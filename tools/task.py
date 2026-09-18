@@ -40,6 +40,10 @@ SIDES = ("A", "B")
 # 出好的 prompt 另存一份到桌面，方便双击打开、复制粘贴
 PROMPT_DIR_NAME = "prompt原文"
 
+# 每道题一个标签颜色，四个窗口一眼分得开
+LAUNCH_COLORS = ["#8e44ad", "#d35400", "#16a085", "#c2185b",
+                 "#2980b9", "#c0392b", "#27ae60", "#7f8c8d"]
+
 # 工作区里这些目录/文件属于"未跟踪的产物"，既不进快照也不参与重置
 EXCLUDES = {
     ".git",
@@ -583,6 +587,139 @@ def cmd_set(args):
     return 0
 
 
+def launch_color(task_id):
+    digits = re.sub(r"\D", "", task_id)
+    index = (int(digits) - 1) if digits else 0
+    return LAUNCH_COLORS[index % len(LAUNCH_COLORS)]
+
+
+def write_launchers(task_id, root, meta):
+    """在题目目录下写 A/B 启动器：双击开一个带名字和颜色的终端标签，直接进这一轮的工作区。"""
+    slug = ((meta.get("title") or "").strip().split() or [task_id.lower()])[0]
+    slug = re.sub(r"[^A-Za-z0-9._-]+", "", slug) or task_id.lower()
+    color = launch_color(task_id)
+    written = []
+
+    for side in SIDES:
+        label = f"{task_id.upper()}-{side} {slug}"
+        path = os.path.join(root, f"{side}-run.cmd")
+        # .cmd 必须是纯 ASCII：cmd.exe 按 OEM 代码页解析文件，中文注释会出乱码
+        body = (
+            "@echo off\r\n"
+            f"rem {label} -- open a named/colored terminal tab in this round's workspace\r\n"
+            "setlocal\r\n"
+            f'set "LABEL={label}"\r\n'
+            f'set "COLOR={color}"\r\n'
+            f'set "DIR=%~dp0{side}"\r\n'
+            f'set "TASK={task_id.upper()}"\r\n'
+            f'set "SIDE={side}"\r\n'
+            f'set "REPO={REPO}"\r\n'
+            "rem the workspace may have been deleted by accident -- put it back from git\r\n"
+            'dir /b /a-d "%DIR%" 2>nul | findstr . >nul || call :restore\r\n'
+            "where wt >nul 2>nul\r\n"
+            "if errorlevel 1 goto plain\r\n"
+            'wt -w 0 nt --title "%LABEL%" --tabColor "%COLOR%" '
+            '--suppressApplicationTitle -d "%DIR%" cmd /k codexcli\r\n'
+            "if errorlevel 1 goto plain\r\n"
+            "exit /b 0\r\n"
+            "\r\n"
+            ":restore\r\n"
+            'echo [launcher] "%DIR%" is empty -- restoring it from git ...\r\n'
+            'pushd "%REPO%"\r\n'
+            "uv run python tools\\task.py reset %TASK% --side %SIDE%\r\n"
+            "popd\r\n"
+            "exit /b 0\r\n"
+            "\r\n"
+            ":plain\r\n"
+            "title %LABEL%\r\n"
+            'cd /d "%DIR%"\r\n'
+            "codexcli\r\n"
+        )
+        with open(path, "w", encoding="ascii", errors="replace", newline="") as fh:
+            fh.write(body)
+        written.append(path)
+    return written
+
+
+def cmd_launch(args):
+    """给题目目录生成 A / B 启动器（不动工作区内容）。"""
+    if args.id:
+        ids = [args.id.upper()]
+    else:
+        store = load_workspace_store()
+        ids = sorted(t for t, entry in store.items() if entry.get("root"))
+    if not ids:
+        print("没有登记过工作区根目录的题目，先用 t prep <题号> --root <目录>")
+        return 0
+
+    for task_id in ids:
+        meta = load_meta(task_id)
+        root = args.root or task_root(task_id)
+        if not root:
+            print(f"  {task_id}: 跳过（没登记根目录）")
+            continue
+        for path in write_launchers(task_id, root, meta):
+            print(f"  {os.path.basename(path)}  ->  {path}")
+    return 0
+
+
+def write_rebuild_script(parent, task_ids):
+    """在题目目录的父目录里放一个一键重建脚本（桌面误删、换机器时用）。"""
+    path = os.path.join(parent, "重建全部题目.cmd")
+    body = (
+        "@echo off\r\n"
+        "rem Rebuild every task workspace (A/B) from git, then refresh the launchers.\r\n"
+        "rem Use this after the folders were deleted or after moving to another machine.\r\n"
+        "chcp 65001 >nul\r\n"
+        f'cd /d "{REPO}"\r\n'
+        "echo Rebuilding task workspaces from git ...\r\n"
+        "uv run python tools\\task.py rebuild\r\n"
+        "echo.\r\n"
+        "pause\r\n"
+    )
+    with open(path, "w", encoding="ascii", errors="replace", newline="") as fh:
+        fh.write(body)
+    return path
+
+
+def cmd_rebuild(args):
+    """按登记的根目录，把所有题目的 A / B 工作区重新铺一遍，并更新启动器。
+
+    桌面上误删了文件夹、或者换了机器之后，跑这一条就全回来了（内容来自 git 分支，不会丢）。
+    """
+    store = load_workspace_store()
+    ids = [args.id.upper()] if args.id else sorted(t for t, e in store.items() if e.get("root"))
+    if not ids:
+        print("没有登记过工作区根目录的题目")
+        return 0
+
+    for task_id in ids:
+        root = task_root(task_id)
+        if not root:
+            print(f"{task_id}: 跳过（没登记根目录）")
+            continue
+        meta = load_meta(task_id)
+        base = branches(task_id)["base"]
+        base_ref = ref(base)
+        if not base_ref:
+            print(f"{task_id}: 跳过（找不到 {base} 分支）")
+            continue
+        print(f"{task_id}  ->  {root}")
+        os.makedirs(root, exist_ok=True)
+        for side in SIDES:
+            dest = os.path.join(root, side)
+            how = materialize(task_id, base_ref, dest)
+            write_workspace_record(task_id, dest, root=root)
+            print(f"    {side}: {how}")
+        write_launchers(task_id, root, meta)
+    parents = {os.path.dirname(task_root(t)) for t in ids if task_root(t)}
+    for parent in sorted(parents):
+        if parent and os.path.isdir(parent):
+            print(f"    一键重建脚本: {write_rebuild_script(parent, ids)}")
+    print("\n完成。桌面上双击 <题目目录>\\A-run.cmd / B-run.cmd 就能开对应那一轮。")
+    return 0
+
+
 def cmd_prompt(args):
     """把 prompt 原文同步到桌面的「prompt原文」文件夹。"""
     if args.id:
@@ -709,6 +846,8 @@ def cmd_prep(args):
     print(f"\n两轮分别在这两个目录里跑，用完全相同的 prompt：")
     print(f"  A 窗口: cd \"{os.path.join(root, 'A')}\"")
     print(f"  B 窗口: cd \"{os.path.join(root, 'B')}\"")
+    for path in write_launchers(task_id, root, load_meta(task_id)):
+        print(f"  启动器 : {path}")
     print(f"跑完记账： t record {task_id} a --side a --session <A-SessionID>")
     print(f"         t record {task_id} b --side b --session <B-SessionID>")
     return 0
@@ -899,6 +1038,15 @@ def build_parser():
     pm = sub.add_parser("prompt", help="把 prompt 原文同步到桌面「prompt原文」文件夹")
     pm.add_argument("id", nargs="?", help="题号；不给就同步全部")
     pm.set_defaults(func=cmd_prompt)
+
+    lc = sub.add_parser("launch", help="生成 A/B 启动器（带标签名字和颜色的终端）")
+    lc.add_argument("id", nargs="?", help="题号；不给就处理所有已登记的题目")
+    lc.add_argument("--root", help="题目目录；默认用本机登记过的")
+    lc.set_defaults(func=cmd_launch)
+
+    rb = sub.add_parser("rebuild", help="按登记重新铺出所有题目的 A / B 工作区与启动器")
+    rb.add_argument("id", nargs="?", help="题号；不给就全部")
+    rb.set_defaults(func=cmd_rebuild)
 
     st = sub.add_parser("set", help="补/改题目的元数据（Harness 版本、GSB、录屏等）")
     st.add_argument("id")
