@@ -75,23 +75,31 @@ t prompt            :: 会打印桌面文件夹路径
 谁跑废了就单独清谁，另一轮完全不受影响。
 
 ```
-D:\gsb\T006\
+桌面\GSB题目\T006\
 ├── A\        A 窗口在这里跑
-└── B\        B 窗口在这里跑
+├── B\        B 窗口在这里跑
+├── A-run.cmd 双击：开一个带名字和颜色的终端标签，直接进 A
+└── B-run.cmd 同上，进 B
 ```
 
+新建题目时这些都会自动生成，不传 `--root` 就默认放 `桌面\GSB题目\<题号>\`：
+
 ```bat
-t prep  T006 --root D:\gsb\T006          :: 按 t006/base 铺出 A / B 两份
+t new T007 --workspace <起始环境目录> --prompt-file p.txt ...
+```
+
+启动器用 Windows Terminal 开标签：标题是 `T007-A emberdeck` 这种（带 `--suppressApplicationTitle`，
+codexcli 改不掉），颜色按题号固定分配，所以同时跑两题四轮也能一眼分清。工作区万一被删空，
+启动器会先自动从 git 重建再进。
+
+```bat
+t prep  T006                             :: 按 t006/base 铺出 A / B（默认就在桌面）
 t reset T006 --side a                    :: 只重置 A（走 git reset --hard + clean -fdx）
 t reset T006 --side a --fresh            :: A 跑烂了？整个删掉重铺，只动 A
 t record T006 a --side a --session <A-SessionID>
 t record T006 b --side b --session <B-SessionID>
-```
-
-新建题目时带上 `--root` 就会自动铺好 A / B：
-
-```bat
-t new T007 --workspace <起始环境目录> --prompt-file p.txt --root D:\gsb\T007 ...
+t launch                                 :: 只重刷启动器
+t rebuild                                :: 桌面误删/换机器后，一键把所有题重建
 ```
 
 为什么分两份：两个窗口指着同一个目录会互相覆盖，分开之后"同一起点"是构造出来的

@@ -40,6 +40,9 @@ SIDES = ("A", "B")
 # 出好的 prompt 另存一份到桌面，方便双击打开、复制粘贴
 PROMPT_DIR_NAME = "prompt原文"
 
+# 题目工作区默认放这里： <桌面>/GSB题目/<题号>/
+TASKS_DIR_NAME = "GSB题目"
+
 # 每道题一个标签颜色，四个窗口一眼分得开
 LAUNCH_COLORS = ["#8e44ad", "#d35400", "#16a085", "#c2185b",
                  "#2980b9", "#c0392b", "#27ae60", "#7f8c8d"]
@@ -169,6 +172,11 @@ def prompt_copy_path(task_id, meta):
     title = (meta.get("title") or "").strip()
     slug = title.split()[0] if title else task_id.lower()
     return os.path.join(desktop_dir(), PROMPT_DIR_NAME, f"{task_id.upper()}-{slug}.txt")
+
+
+def default_task_root(task_id):
+    """题目目录的默认位置：<桌面>/GSB题目/<题号>/"""
+    return os.path.join(desktop_dir(), TASKS_DIR_NAME, task_id.upper())
 
 
 def drop_prompt_copy(task_id, meta=None):
@@ -434,15 +442,9 @@ def cmd_new(args):
     if desktop_copy:
         print(f"prompt 副本: {desktop_copy}")
 
-    if args.root:
-        print()
-        cmd_prep(argparse.Namespace(id=task_id, root=args.root, fresh=False))
-        if args.push:
-            cmd_push(argparse.Namespace(id=task_id))
-        return 0
-
-    print("\n下一步：用同样的工作区跑 A（只跑首轮），跑完执行")
-    print(f"  python tools/task.py record {task_id} a --workspace \"{args.workspace}\" --session <SessionID>")
+    # 默认就把 A / B 两份工作区和启动器一起铺好（不传 --root 就放桌面 \GSB题目\<题号>）
+    print()
+    cmd_prep(argparse.Namespace(id=task_id, root=args.root, fresh=False))
     if args.push:
         cmd_push(argparse.Namespace(id=task_id))
     return 0
@@ -831,7 +833,7 @@ def cmd_prep(args):
     base_ref = ref(base)
     if not base_ref:
         raise SystemExit(f"缺少初始快照分支 {base}")
-    root = os.path.abspath(args.root)
+    root = os.path.abspath(args.root or default_task_root(task_id))
     os.makedirs(root, exist_ok=True)
 
     print(f"{task_id} 工作区根目录: {root}")
@@ -1004,7 +1006,7 @@ def build_parser():
     n.add_argument("--os", default="Windows")
     n.add_argument("--env-level", dest="env_level", default="")
     n.add_argument("--notes", default="")
-    n.add_argument("--root", help="题目目录；给了就在这里自动铺出 A / B 两份工作区")
+    n.add_argument("--root", help=f"题目目录；默认 {TASKS_DIR_NAME}\\<题号>（在桌面）")
     n.add_argument("--no-push", dest="push", action="store_false")
     n.set_defaults(push=True, func=cmd_new)
 
@@ -1031,7 +1033,7 @@ def build_parser():
 
     pr = sub.add_parser("prep", help="按 A / B 约定铺出这道题的两份工作区")
     pr.add_argument("id")
-    pr.add_argument("--root", required=True, help="题目目录，例如 D:\\gsb\\T007")
+    pr.add_argument("--root", help=f"题目目录；默认桌面\\{TASKS_DIR_NAME}\\<题号>")
     pr.add_argument("--fresh", action="store_true", help="先清空再重铺")
     pr.set_defaults(func=cmd_prep)
 
