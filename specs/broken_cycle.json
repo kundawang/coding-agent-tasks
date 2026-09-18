@@ -1,0 +1,23 @@
+{
+  "name": "broken_cycle",
+  "stages": [
+    {
+      "id": "raw",
+      "kind": "source",
+      "deps": ["totals"],
+      "params": {"rows": [{"region": "north", "amount": 10}]}
+    },
+    {
+      "id": "cleaned",
+      "kind": "filter",
+      "deps": ["raw"],
+      "params": {"field": "amount", "op": "gt", "value": 0}
+    },
+    {
+      "id": "totals",
+      "kind": "aggregate",
+      "deps": ["cleaned"],
+      "params": {"group_by": ["region"], "metrics": {"cnt": {"fn": "count"}}}
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "name": "branchy_etl",
+  "stages": [
+    {
+      "id": "load_orders",
+      "kind": "source",
+      "params": {
+        "rows": [
+          {"order_id": "B1", "region": "north", "amount": "12.5"},
+          {"order_id": "B2", "region": "south", "amount": "oops"},
+          {"order_id": "B3", "region": "north", "amount": "7"}
+        ]
+      }
+    },
+    {
+      "id": "amount_to_int",
+      "kind": "map",
+      "deps": ["load_orders"],
+      "params": {"add": {"amount_int": {"from": "amount", "cast": "int"}}}
+    },
+    {
+      "id": "region_count",
+      "kind": "aggregate",
+      "deps": ["load_orders"],
+      "params": {"group_by": ["region"], "metrics": {"orders": {"fn": "count"}}}
+    },
+    {
+      "id": "write_region_count",
+      "kind": "export",
+      "deps": ["region_count"],
+      "params": {"path": "region_count.json", "format": "json"}
+    }
+  ]
+}

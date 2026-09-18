@@ -1,0 +1,57 @@
+{
+  "name": "daily_etl",
+  "stages": [
+    {
+      "id": "load_orders",
+      "kind": "source",
+      "params": {
+        "rows": [
+          {"order_id": "A1001", "region": "north", "status": "paid", "amount": 120.5},
+          {"order_id": "A1002", "region": "south", "status": "paid", "amount": 80},
+          {"order_id": "A1003", "region": "north", "status": "cancelled", "amount": 45},
+          {"order_id": "A1004", "region": "east", "status": "paid", "amount": 210},
+          {"order_id": "A1005", "region": "south", "status": "refunded", "amount": 30},
+          {"order_id": "A1006", "region": "north", "status": "paid", "amount": 99.5},
+          {"order_id": "A1007", "region": "east", "status": "cancelled", "amount": 60},
+          {"order_id": "A1008", "region": "east", "status": "paid", "amount": 15}
+        ]
+      }
+    },
+    {
+      "id": "drop_cancelled",
+      "kind": "filter",
+      "deps": ["load_orders"],
+      "params": {"field": "status", "op": "ne", "value": "cancelled"}
+    },
+    {
+      "id": "enrich",
+      "kind": "map",
+      "deps": ["drop_cancelled"],
+      "params": {
+        "add": {
+          "amount_cents": {"from": "amount", "cast": "float", "mul": 100},
+          "region_upper": {"from": "region", "cast": "str"}
+        }
+      }
+    },
+    {
+      "id": "by_region",
+      "kind": "aggregate",
+      "deps": ["enrich"],
+      "params": {
+        "group_by": ["region"],
+        "metrics": {
+          "orders": {"fn": "count"},
+          "cents": {"field": "amount_cents", "fn": "sum"},
+          "avg_cents": {"field": "amount_cents", "fn": "avg"}
+        }
+      }
+    },
+    {
+      "id": "write_report",
+      "kind": "export",
+      "deps": ["by_region"],
+      "params": {"path": "report.json", "format": "json"}
+    }
+  ]
+}
