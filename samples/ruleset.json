@@ -1,0 +1,61 @@
+{
+  "version": "2026-09-18.1",
+  "default_decision": "allow",
+  "rules": [
+    {
+      "id": "R-REVIEW-NEW-USER",
+      "priority": 10,
+      "when": {"field": "user.age_days", "op": "lte", "value": 1},
+      "then": "review",
+      "reason": "注册不足一天的新账号"
+    },
+    {
+      "id": "R-REVIEW-AMOUNT-SUM",
+      "priority": 60,
+      "when": {"field": "window.amount_60s", "op": "gt", "value": 3000},
+      "then": "review",
+      "reason": "一分钟内累计下单金额超过 3000"
+    },
+    {
+      "id": "R-DENY-RISKY-DEVICE",
+      "priority": 80,
+      "when": {
+        "all": [
+          {"field": "amount", "op": "gt", "value": 2000},
+          {
+            "any": [
+              {"field": "device.risk_score", "op": "gte", "value": 70},
+              {"field": "user.card.number", "op": "startswith", "value": "62"}
+            ]
+          }
+        ]
+      },
+      "then": "deny",
+      "reason": "高风险设备或借记卡大额下单"
+    },
+    {
+      "id": "R-DENY-AMOUNT",
+      "priority": 90,
+      "when": {
+        "all": [
+          {"field": "amount", "op": "gt", "value": 5000},
+          {"field": "channel", "op": "in", "value": ["h5", "miniapp"]}
+        ]
+      },
+      "then": "deny",
+      "reason": "非可信渠道大额下单"
+    },
+    {
+      "id": "R-DENY-FREQ",
+      "priority": 100,
+      "when": {
+        "all": [
+          {"field": "window.count_60s", "op": "gte", "value": 6},
+          {"field": "user.level", "op": "not_in", "value": ["vip", "svip"]}
+        ]
+      },
+      "then": "deny",
+      "reason": "60 秒内下单尝试达到 6 次"
+    }
+  ]
+}
