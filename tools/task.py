@@ -164,6 +164,11 @@ def sync_workspace_to_branch(task_id, role, workspace):
     """把工作区内容做成代码分支（base/a/b）。"""
     br = branches(task_id)[role]
     base = branches(task_id)["base"]
+    dirty = git("status", "--porcelain")
+    if dirty:
+        raise SystemExit(
+            "仓库里有未提交的改动，先提交再执行（本操作会清空工作区）：\n" + dirty
+        )
     if role == "base":
         git("checkout", "--orphan", br)
         git("rm", "-rf", "--cached", "-q", ".", check=False)
@@ -183,10 +188,16 @@ def cmd_new(args):
     dest = task_dir(task_id)
     if os.path.exists(dest):
         raise SystemExit(f"{dest} 已存在")
-    template = os.path.join(TASKS, "_TEMPLATE")
-    shutil.copytree(template, dest)
     with open(args.prompt_file, encoding="utf-8") as fh:
         prompt = fh.read()
+
+    # 先做代码分支：这一步会清空仓库工作区，台账文件必须等它之后再写
+    original = git("rev-parse", "--abbrev-ref", "HEAD")
+    br, sha = sync_workspace_to_branch(task_id, "base", args.workspace)
+    git("checkout", "-q", original)
+
+    template = os.path.join(TASKS, "_TEMPLATE")
+    shutil.copytree(template, dest)
     with open(os.path.join(dest, "prompt.md"), "w", encoding="utf-8") as fh:
         fh.write(prompt if prompt.endswith("\n") else prompt + "\n")
     os.makedirs(os.path.join(dest, "trajectories"), exist_ok=True)
@@ -203,7 +214,7 @@ def cmd_new(args):
         "os": args.os,
         "env_level": args.env_level,
         "prompt_file": "prompt.md",
-        "initial_snapshot": {"branch": "", "sha": "", "permalink": ""},
+        "initial_snapshot": {"branch": br, "sha": sha, "permalink": permalink(sha)},
         "runs": {
             "A": {"session_id": "", "trajectory_local": "", "trajectory_url": "",
                   "branch": branches(task_id)["a"], "product_snapshot_sha": "",
@@ -214,14 +225,6 @@ def cmd_new(args):
         },
         "notes": args.notes,
     }
-    save_meta(task_id, meta)
-
-    original = git("rev-parse", "--abbrev-ref", "HEAD")
-    br, sha = sync_workspace_to_branch(task_id, "base", args.workspace)
-    git("checkout", "-q", original)
-
-    meta = load_meta(task_id)
-    meta["initial_snapshot"] = {"branch": br, "sha": sha, "permalink": permalink(sha)}
     save_meta(task_id, meta)
     commit_all(f"{task_id} metadata")
     write_marker(args.workspace, {"task_id": task_id, "role": "workspace", "base_branch": br})
@@ -296,24 +299,25 @@ def cmd_reset(args):
     tracked = {line for line in git("ls-tree", "-r", "--name-only", base).splitlines() if line}
 
     # 1) 删掉不属于初始快照的文件（node_modules/venv/构建产物等一并清掉）
-    for dirpath, dirnames, filenames in os.walk(args.workspace, topdown=True):
+    #    自底向上遍历：先删文件，再把空掉的目录收掉，同时保留 .taskworkspace 标记
+    for dirpath, _dirnames, filenames in os.walk(args.workspace, topdown=False):
         rel = os.path.relpath(dirpath, args.workspace).replace("\\", "/")
         rel = "" if rel == "." else rel
-        for name in list(dirnames):
-            full = f"{rel}/{name}" if rel else name
-            if name == ".git" or full in {t.split("/")[0] for t in tracked}:
-                dirnames.remove(name)
-                continue
-            if full not in {"/".join(t.split("/")[:full.count("/") + 1]) for t in tracked} and \
-               not any(t.startswith(full + "/") for t in tracked):
-                shutil.rmtree(os.path.join(dirpath, name), ignore_errors=True)
-                dirnames.remove(name)
+        if rel == ".git" or rel.startswith(".git/"):
+            continue
         for name in filenames:
-            full = f"{rel}/{name}" if rel else name
-            if full in (MARKER,) or name == MARKER:
+            if name == MARKER:
                 continue
+            full = f"{rel}/{name}" if rel else name
             if full not in tracked:
                 os.remove(os.path.join(dirpath, name))
+        if rel:
+            still_needed = any(t == rel or t.startswith(rel + "/") for t in tracked)
+            if not still_needed:
+                try:
+                    os.rmdir(dirpath)
+                except OSError:
+                    pass
 
     # 2) 用初始快照的内容覆盖回去
     archive = subprocess.run(["git", "archive", base], cwd=REPO, capture_output=True)
