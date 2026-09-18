@@ -1,0 +1,10 @@
+{
+  "weapons": {
+    "mortar":  {"name": "迫击炮", "damage": 26, "radius": 24, "muzzle_speed": 520, "gravity": 900, "ammo": -1},
+    "cluster": {"name": "集束弹", "damage": 16, "radius": 34, "muzzle_speed": 460, "gravity": 900, "ammo": 3,
+                "children": {"count": 3, "damage": 8, "radius": 18}},
+    "drill":   {"name": "钻地弹", "damage": 30, "radius": 16, "muzzle_speed": 600, "gravity": 900, "ammo": 2,
+                "dig_first": true}
+  },
+  "default_weapon": "mortar"
+}

@@ -1,0 +1,9 @@
+{
+  "seed": 20260918,
+  "note": "同一个 seed + 同一串操作，弹道、爆炸、伤害必须完全一致",
+  "turns": [
+    {"player": 0, "move": -40, "angle": 45, "power": 72, "weapon": "mortar", "fire": true},
+    {"player": 1, "move": 25, "angle": 62, "power": 88, "weapon": "mortar", "fire": true},
+    {"player": 0, "move": 0, "angle": 38, "power": 95, "weapon": "cluster", "fire": true}
+  ]
+}
