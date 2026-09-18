@@ -1,0 +1,37 @@
+{
+  "task_id": "T000",
+  "title": "",
+  "created_at": "",
+  "task_type": "",
+  "difficulty": "",
+  "language_framework": "",
+  "harness": "",
+  "harness_version": "",
+  "os": "Windows",
+  "env_level": "",
+  "prompt_file": "prompt.md",
+  "initial_snapshot": {
+    "branch": "",
+    "sha": "",
+    "permalink": ""
+  },
+  "runs": {
+    "A": {
+      "session_id": "",
+      "trajectory_local": "",
+      "trajectory_url": "",
+      "branch": "",
+      "product_snapshot_sha": "",
+      "product_snapshot_permalink": ""
+    },
+    "B": {
+      "session_id": "",
+      "trajectory_local": "",
+      "trajectory_url": "",
+      "branch": "",
+      "product_snapshot_sha": "",
+      "product_snapshot_permalink": ""
+    }
+  },
+  "notes": ""
+}

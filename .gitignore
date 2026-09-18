@@ -1,0 +1,44 @@
+# 依赖与虚拟环境
+node_modules/
+.venv/
+venv/
+env/
+.python-version
+
+# 构建产物
+dist/
+build/
+out/
+target/
+.next/
+.nuxt/
+coverage/
+*.egg-info/
+
+# 缓存
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.gradle/
+.cache/
+
+# 编辑器 / 系统
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# 凭据：绝对不要提交
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+*token*.json
+*secret*
+
+# 日志
+*.log
+npm-debug.log*
