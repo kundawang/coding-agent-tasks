@@ -1,0 +1,20 @@
+{
+  "cards": {
+    "strike":       {"name": "打击",     "cost": 1, "overload": 0, "type": "attack", "effects": [{"kind": "damage", "amount": 6}]},
+    "guard":        {"name": "格挡",     "cost": 1, "overload": 0, "type": "skill",  "effects": [{"kind": "block", "amount": 5}]},
+    "venom_dart":   {"name": "毒镖",     "cost": 1, "overload": 0, "type": "attack", "effects": [{"kind": "damage", "amount": 3}, {"kind": "status", "status": "poison", "amount": 3, "target": "enemy"}]},
+    "heavy_blow":   {"name": "重击",     "cost": 2, "overload": 0, "type": "attack", "effects": [{"kind": "damage", "amount": 12}]},
+    "focus":        {"name": "凝神",     "cost": 0, "overload": 0, "type": "skill",  "effects": [{"kind": "draw", "amount": 2}]},
+    "overcharge":   {"name": "超载打击", "cost": 0, "overload": 2, "type": "attack", "effects": [{"kind": "damage", "amount": 9}]},
+    "bash":         {"name": "破甲",     "cost": 2, "overload": 0, "type": "attack", "effects": [{"kind": "damage", "amount": 8}, {"kind": "status", "status": "vulnerable", "amount": 2, "target": "enemy"}]},
+    "wither":       {"name": "削弱",     "cost": 1, "overload": 0, "type": "skill",  "effects": [{"kind": "status", "status": "weak", "amount": 2, "target": "enemy"}]},
+    "ember_shield": {"name": "余烬护盾", "cost": 2, "overload": 0, "type": "skill",  "effects": [{"kind": "block", "amount": 8}, {"kind": "draw", "amount": 1}]},
+    "siphon":       {"name": "汲取",     "cost": 1, "overload": 1, "type": "skill",  "effects": [{"kind": "block", "amount": 9}]}
+  },
+  "starter_deck": [
+    "strike", "strike", "strike",
+    "guard", "guard", "guard",
+    "venom_dart", "focus", "overcharge",
+    "bash", "wither", "ember_shield", "heavy_blow", "siphon"
+  ]
+}

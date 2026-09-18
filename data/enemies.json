@@ -1,0 +1,15 @@
+{
+  "enemies": {
+    "rust_golem": {
+      "name": "锈蚀傀儡",
+      "hp": 68,
+      "intents": [
+        {"name": "重砸", "effects": [{"kind": "damage", "amount": 9}]},
+        {"name": "铸甲", "effects": [{"kind": "block", "amount": 8}]},
+        {"name": "挥击", "effects": [{"kind": "damage", "amount": 6}, {"kind": "status", "status": "weak", "amount": 1, "target": "player"}]},
+        {"name": "腐息", "effects": [{"kind": "status", "status": "poison", "amount": 2, "target": "player"}]}
+      ]
+    }
+  },
+  "starter_enemy": "rust_golem"
+}

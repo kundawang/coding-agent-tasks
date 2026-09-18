@@ -1,0 +1,17 @@
+{
+  "relics": {
+    "ember_core": {
+      "name": "余烬核心",
+      "trigger": "player_turn_start",
+      "order": 1,
+      "effects": [{"kind": "block", "amount": 3}]
+    },
+    "venom_sac": {
+      "name": "毒囊",
+      "trigger": "enemy_gains_poison",
+      "order": 2,
+      "effects": [{"kind": "status", "status": "poison", "amount": 1, "target": "enemy"}]
+    }
+  },
+  "starter_relics": ["ember_core", "venom_sac"]
+}

@@ -1,0 +1,11 @@
+{
+  "seed": 20260918,
+  "note": "同一个 seed + 同一串操作，重放出来的战斗过程必须逐字段一致",
+  "actions": [
+    {"op": "play_card", "hand_index": 0},
+    {"op": "play_card", "hand_index": 0},
+    {"op": "end_turn"},
+    {"op": "play_card", "hand_index": 1},
+    {"op": "end_turn"}
+  ]
+}
