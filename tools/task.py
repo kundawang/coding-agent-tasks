@@ -211,16 +211,26 @@ def workspace_git_reset(workspace):
 
 
 def write_workspace_record(task_id, workspace):
+    """把工作区路径记进台账。一行一个：同一道题可以有多份副本（多台机器，或 A/B 并行）。"""
     path = os.path.join(task_dir(task_id), WORKSPACE_RECORD)
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write(os.path.abspath(workspace) + "\n")
+    target = os.path.abspath(workspace)
+    if any(same_path(item, target) for item in read_workspace_records(task_id)):
+        return
+    with open(path, "a", encoding="utf-8") as fh:
+        fh.write(target + "\n")
+
+
+def read_workspace_records(task_id):
+    path = os.path.join(task_dir(task_id), WORKSPACE_RECORD)
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as fh:
+        return [line.strip() for line in fh if line.strip()]
 
 
 def read_workspace_record(task_id):
-    path = os.path.join(task_dir(task_id), WORKSPACE_RECORD)
-    if not os.path.exists(path):
-        return ""
-    return open(path, encoding="utf-8").read().strip()
+    records = read_workspace_records(task_id)
+    return records[-1] if records else ""
 
 
 def same_path(left, right):
@@ -450,11 +460,14 @@ def cmd_set(args):
 
 def cmd_reset(args):
     task_id = args.id.upper()
-    recorded = read_workspace_record(task_id)
-    if recorded and not same_path(recorded, args.workspace):
+    recorded = read_workspace_records(task_id)
+    if recorded and not args.force and not any(
+        same_path(item, args.workspace) for item in recorded
+    ):
         raise SystemExit(
-            f"拒绝操作：{task_id} 记录的工作区是 {recorded}，"
-            f"与你传入的 {args.workspace} 不一致，已中止。"
+            f"拒绝操作：{task_id} 记录的工作区是 {', '.join(recorded)}，"
+            f"与你传入的 {args.workspace} 不一致，已中止。\n"
+            f"如果这是同一道题的另一份副本（例如 A/B 并行跑各一份），加 --force 继续。"
         )
 
     if workspace_git_reset(args.workspace):
@@ -642,6 +655,8 @@ def build_parser():
     s = sub.add_parser("reset", help="把工作区重置回初始环境")
     s.add_argument("id")
     s.add_argument("--workspace", required=True)
+    s.add_argument("--force", action="store_true",
+                   help="允许铺到这道题的另一份工作区（A/B 并行跑时用）")
     s.set_defaults(func=cmd_reset)
 
     st = sub.add_parser("set", help="补/改题目的元数据（Harness 版本、GSB、录屏等）")
