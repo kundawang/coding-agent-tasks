@@ -17,6 +17,7 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 
@@ -32,6 +33,9 @@ TOOLS = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(TOOLS)
 TASKS = os.path.join(REPO, "tasks")
 WORKSPACE_RECORD = ".workspace"  # 记在仓库里（不进工作区，避免给模型任何"这是评测题"的暗示）
+
+# 一道题跑两轮，工作区按 A / B 两份摆放： <题目目录>/A  <题目目录>/B
+SIDES = ("A", "B")
 
 # 工作区里这些目录/文件属于"未跟踪的产物"，既不进快照也不参与重置
 EXCLUDES = {
@@ -210,32 +214,74 @@ def workspace_git_reset(workspace):
     return True
 
 
-def write_workspace_record(task_id, workspace):
-    """把工作区路径记下来（同一道题可以有多份副本：多台机器，或 A/B 并行）。
+def workspace_store_path():
+    return os.path.join(os.path.expanduser("~"), ".coding-agent-tasks", "workspaces.json")
 
-    存在用户目录下，不入库 —— 工作区路径是本机状态，而且建新题时会清空仓库工作区，
-    记在 tasks/ 里会被一起清掉。
-    """
-    target = os.path.abspath(workspace)
-    if any(same_path(item, target) for item in read_workspace_records(task_id)):
-        return
+
+def load_workspace_store():
+    """读本机的工作区登记。旧格式（任务 -> 路径列表）会自动升级成新格式。"""
     path = workspace_store_path()
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    store = {}
+    raw = {}
     if os.path.exists(path):
         try:
             with open(path, encoding="utf-8") as fh:
-                store = json.load(fh)
+                raw = json.load(fh)
         except (json.JSONDecodeError, OSError):
-            store = {}
-    store.setdefault(task_id.upper(), []).append(target)
+            raw = {}
+    store = {}
+    for key, value in raw.items():
+        if isinstance(value, list):                 # 旧格式
+            store[key.upper()] = {"root": "", "workspaces": list(value)}
+        elif isinstance(value, dict):
+            store[key.upper()] = {
+                "root": value.get("root", ""),
+                "workspaces": list(value.get("workspaces", [])),
+            }
+    return store
+
+
+def save_workspace_store(store):
+    path = workspace_store_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(store, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
 
 
-def workspace_store_path():
-    return os.path.join(os.path.expanduser("~"), ".coding-agent-tasks", "workspaces.json")
+def write_workspace_record(task_id, workspace, root=""):
+    """登记一个工作区。
+
+    存在用户目录下、不入库：工作区路径是本机状态，而且建新题时会清空仓库工作区，
+    记在 tasks/ 里会被一起清掉。
+    """
+    task = task_id.upper()
+    store = load_workspace_store()
+    entry = store.setdefault(task, {"root": "", "workspaces": []})
+    target = os.path.abspath(workspace)
+    if not any(same_path(item, target) for item in entry["workspaces"]):
+        entry["workspaces"].append(target)
+    if root:
+        entry["root"] = os.path.abspath(root)
+    save_workspace_store(store)
+
+
+def task_root(task_id):
+    """这道题的工作区根目录（下面应该有 A / B 两个子目录）。"""
+    entry = load_workspace_store().get(task_id.upper()) or {}
+    return entry.get("root", "")
+
+
+def side_path(task_id, side, root=""):
+    side = (side or "").upper()
+    if side not in SIDES:
+        raise SystemExit(f"--side 只能是 {' 或 '.join(SIDES)}")
+    base_root = os.path.abspath(root) if root else task_root(task_id)
+    if not base_root:
+        raise SystemExit(
+            f"{task_id} 还没登记工作区根目录。先跑一次："
+            f" t prep {task_id.upper()} --root <题目目录>"
+        )
+    return os.path.join(base_root, side)
 
 
 def read_workspace_records(task_id):
@@ -244,13 +290,8 @@ def read_workspace_records(task_id):
     if os.path.exists(legacy):
         with open(legacy, encoding="utf-8") as fh:
             records.extend(line.strip() for line in fh if line.strip())
-    path = workspace_store_path()
-    if os.path.exists(path):
-        try:
-            with open(path, encoding="utf-8") as fh:
-                records.extend(json.load(fh).get(task_id.upper(), []))
-        except (json.JSONDecodeError, OSError):
-            pass
+    entry = load_workspace_store().get(task_id.upper()) or {}
+    records.extend(entry.get("workspaces", []))
     seen, out = set(), []
     for item in records:
         key = os.path.normcase(os.path.abspath(item))
@@ -347,6 +388,14 @@ def cmd_new(args):
     print(f"初始环境快照: {sha}")
     print(f"  branch    : {br}")
     print(f"  permalink : {permalink(sha)}")
+
+    if args.root:
+        print()
+        cmd_prep(argparse.Namespace(id=task_id, root=args.root, fresh=False))
+        if args.push:
+            cmd_push(argparse.Namespace(id=task_id))
+        return 0
+
     print("\n下一步：用同样的工作区跑 A（只跑首轮），跑完执行")
     print(f"  python tools/task.py record {task_id} a --workspace \"{args.workspace}\" --session <SessionID>")
     if args.push:
@@ -358,6 +407,7 @@ def cmd_record(args):
     task_id = args.id.upper()
     role = args.role.lower()
     meta = load_meta(task_id)
+    workspace = resolve_workspace(args, task_id)
     base = branches(task_id)["base"]
     if not ref(base):
         raise SystemExit(f"缺少初始快照分支 {base}，请先执行 new")
@@ -365,7 +415,7 @@ def cmd_record(args):
         raise SystemExit("初始环境快照 commit 在当前仓库里找不到")
 
     original = git("rev-parse", "--abbrev-ref", "HEAD")
-    br, sha = sync_workspace_to_branch(task_id, role, args.workspace)
+    br, sha = sync_workspace_to_branch(task_id, role, workspace)
     git("checkout", "-q", original)
 
     hits = find_trajectory.find(args.session)
@@ -490,33 +540,42 @@ def cmd_set(args):
     return 0
 
 
-def cmd_reset(args):
-    task_id = args.id.upper()
-    recorded = read_workspace_records(task_id)
-    if recorded and not args.force and not any(
-        same_path(item, args.workspace) for item in recorded
-    ):
+def wipe_side(path):
+    """清空一个副本目录。只允许清 A / B 这种按约定命名的目录，避免误删。"""
+    target = os.path.abspath(path)
+    if os.path.basename(target).upper() not in SIDES:
         raise SystemExit(
-            f"拒绝操作：{task_id} 记录的工作区是 {', '.join(recorded)}，"
-            f"与你传入的 {args.workspace} 不一致，已中止。\n"
-            f"如果这是同一道题的另一份副本（例如 A/B 并行跑各一份），加 --force 继续。"
+            f"拒绝清空 {target}：只清 <题目目录>\\A 或 \\B 这种按约定命名的副本。"
         )
+    if not os.path.isdir(target):
+        return
 
-    if workspace_git_reset(args.workspace):
-        write_workspace_record(task_id, args.workspace)
-        print(f"工作区已 git reset --hard 回最初提交，未跟踪文件已清掉，可以跑 B 了。")
-        return 0
+    def force_remove(func, path, _exc):
+        # Windows 上 git 的对象文件是只读的，直接 rmtree 会 PermissionError
+        try:
+            os.chmod(path, stat.S_IWRITE)
+        except OSError:
+            pass
+        func(path)
 
+    try:
+        shutil.rmtree(target, onexc=force_remove)
+    except TypeError:                      # Python < 3.12 没有 onexc
+        shutil.rmtree(target, onerror=force_remove)
+
+
+def materialize(task_id, base_ref, dest):
+    """把初始快照铺到 dest，并把 dest 初始化成 git 仓库（下次重置走 reset --hard）。"""
     base = branches(task_id)["base"]
-    base_ref = ref(base)
-    if not base_ref:
-        raise SystemExit(f"缺少初始快照分支 {base}，无法重置")
+    os.makedirs(dest, exist_ok=True)
+    if workspace_git_reset(dest):
+        return "git reset --hard"
+
     tracked = {line for line in git("ls-tree", "-r", "--name-only", base_ref).splitlines() if line}
 
-    # 1) 删掉不属于初始快照的文件（node_modules/venv/构建产物等一并清掉）
-    #    自底向上遍历：先删文件，再把空掉的目录收掉，同时保留 .taskworkspace 标记
-    for dirpath, _dirnames, filenames in os.walk(args.workspace, topdown=False):
-        rel = os.path.relpath(dirpath, args.workspace).replace("\\", "/")
+    # 1) 删掉不属于初始快照的文件（node_modules / venv / 构建产物等一并清掉）
+    for dirpath, _dirnames, filenames in os.walk(dest, topdown=False):
+        rel = os.path.relpath(dirpath, dest).replace("\\", "/")
         rel = "" if rel == "." else rel
         if rel == ".git" or rel.startswith(".git/"):
             continue
@@ -536,18 +595,80 @@ def cmd_reset(args):
     archive = subprocess.run(["git", "archive", base_ref], cwd=REPO, capture_output=True)
     if archive.returncode != 0:
         raise SystemExit("git archive 失败")
-    extract = subprocess.run(["tar", "-x", "-C", args.workspace], input=archive.stdout, capture_output=True)
+    extract = subprocess.run(["tar", "-x", "-C", dest], input=archive.stdout, capture_output=True)
     if extract.returncode != 0:
         raise SystemExit(f"解包失败: {extract.stderr.decode(errors='replace')[:300]}")
 
-    # 换一台机器时这里就是"把这道题的初始环境拉下来"：建好并记为 git 仓库，
-    # 下次 reset 直接走 reset --hard + clean
-    if ensure_workspace_repo(args.workspace):
-        print(f"已把工作区初始化为 git 仓库: {args.workspace}")
-    write_workspace_record(task_id, args.workspace)
+    ensure_workspace_repo(dest)
+    return f"铺出 {base}"
 
-    print(f"工作区已重置到初始环境 {base} ({load_meta(task_id)['initial_snapshot']['sha']})")
-    print("node_modules / venv / 构建产物等未跟踪文件已清掉，可以跑 B 了。")
+
+def resolve_workspace(args, task_id, need=True):
+    """--side 优先（走后缀约定），否则用 --workspace。"""
+    if getattr(args, "side", None):
+        return side_path(task_id, args.side, getattr(args, "root", "") or "")
+    workspace = getattr(args, "workspace", None)
+    if workspace:
+        return os.path.abspath(workspace)
+    if need:
+        raise SystemExit("要么给 --side a|b（走 <题目目录>\\A|B 约定），要么给 --workspace <目录>")
+    return ""
+
+
+def cmd_prep(args):
+    """按 A / B 约定铺出这道题的两份工作区（已存在就重置）。"""
+    task_id = args.id.upper()
+    load_meta(task_id)
+    base = branches(task_id)["base"]
+    base_ref = ref(base)
+    if not base_ref:
+        raise SystemExit(f"缺少初始快照分支 {base}")
+    root = os.path.abspath(args.root)
+    os.makedirs(root, exist_ok=True)
+
+    print(f"{task_id} 工作区根目录: {root}")
+    for side in SIDES:
+        dest = os.path.join(root, side)
+        if args.fresh and os.path.isdir(dest):
+            wipe_side(dest)
+        how = materialize(task_id, base_ref, dest)
+        write_workspace_record(task_id, dest, root=root)
+        print(f"  {side}: {dest}   （{how}）")
+
+    print(f"\n两轮分别在这两个目录里跑，用完全相同的 prompt：")
+    print(f"  A 窗口: cd \"{os.path.join(root, 'A')}\"")
+    print(f"  B 窗口: cd \"{os.path.join(root, 'B')}\"")
+    print(f"跑完记账： t record {task_id} a --side a --session <A-SessionID>")
+    print(f"         t record {task_id} b --side b --session <B-SessionID>")
+    return 0
+
+
+def cmd_reset(args):
+    task_id = args.id.upper()
+    workspace = resolve_workspace(args, task_id)
+    recorded = read_workspace_records(task_id)
+    if recorded and not args.force and not any(
+        same_path(item, workspace) for item in recorded
+    ):
+        raise SystemExit(
+            f"拒绝操作：{task_id} 记录的工作区是 {', '.join(recorded)}，"
+            f"与你传入的 {workspace} 不一致，已中止。\n"
+            f"如果这是同一道题的另一份副本，加 --force 继续。"
+        )
+
+    if args.fresh:
+        wipe_side(workspace)
+
+    base = branches(task_id)["base"]
+    base_ref = ref(base)
+    if not base_ref:
+        raise SystemExit(f"缺少初始快照分支 {base}，无法重置")
+
+    how = materialize(task_id, base_ref, workspace)
+    write_workspace_record(task_id, workspace, root=args.root or task_root(task_id))
+    print(f"{os.path.basename(workspace)} 已重置到初始环境 {base} "
+          f"({load_meta(task_id)['initial_snapshot']['sha']})   [{how}]")
+    print("未跟踪文件已清掉，可以直接重跑这一轮。")
     return 0
 
 
@@ -673,23 +794,36 @@ def build_parser():
     n.add_argument("--os", default="Windows")
     n.add_argument("--env-level", dest="env_level", default="")
     n.add_argument("--notes", default="")
+    n.add_argument("--root", help="题目目录；给了就在这里自动铺出 A / B 两份工作区")
     n.add_argument("--no-push", dest="push", action="store_false")
     n.set_defaults(push=True, func=cmd_new)
 
     r = sub.add_parser("record", help="记录 A/B 的产物快照与轨迹")
     r.add_argument("id")
     r.add_argument("role", choices=["a", "b"])
-    r.add_argument("--workspace", required=True)
+    r.add_argument("--workspace")
+    r.add_argument("--side", help="a 或 b：用 <题目目录>\\A|B 约定定位工作区")
+    r.add_argument("--root", help="工作区根目录（默认用本机登记过的）")
     r.add_argument("--session", required=True)
     r.add_argument("--no-push", dest="push", action="store_false")
     r.set_defaults(push=True, func=cmd_record)
 
     s = sub.add_parser("reset", help="把工作区重置回初始环境")
     s.add_argument("id")
-    s.add_argument("--workspace", required=True)
+    s.add_argument("--workspace")
+    s.add_argument("--side", help="a 或 b：只重置这一轮的工作区")
+    s.add_argument("--root", help="工作区根目录（默认用本机登记过的）")
+    s.add_argument("--fresh", action="store_true",
+                   help="先整个清空 A / B 目录再重铺（某轮跑废了用这个）")
     s.add_argument("--force", action="store_true",
                    help="允许铺到这道题的另一份工作区（A/B 并行跑时用）")
     s.set_defaults(func=cmd_reset)
+
+    pr = sub.add_parser("prep", help="按 A / B 约定铺出这道题的两份工作区")
+    pr.add_argument("id")
+    pr.add_argument("--root", required=True, help="题目目录，例如 D:\\gsb\\T007")
+    pr.add_argument("--fresh", action="store_true", help="先清空再重铺")
+    pr.set_defaults(func=cmd_prep)
 
     st = sub.add_parser("set", help="补/改题目的元数据（Harness 版本、GSB、录屏等）")
     st.add_argument("id")

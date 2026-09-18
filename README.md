@@ -49,26 +49,34 @@ t report T003
 submit T003                :: 飞书表格 dry-run，只看要写什么
 ```
 
-## A/B 并行跑（两个窗口同时跑）
+## 一题一个目录，里面 A / B 两轮
 
-可以，而且比"跑完 A 再重置跑 B"更不容易出错。关键是**两个窗口不能指着同一个目录**，
-而是从同一个初始快照各铺一份副本：
+每道题的工作区都按这个约定摆：**一个题目目录，下面 `A` / `B` 两个子目录**。两轮各占一个，
+谁跑废了就单独清谁，另一轮完全不受影响。
 
-```bat
-t reset T004 --workspace D:\gsb\T004-a --force
-t reset T004 --workspace D:\gsb\T004-b --force
+```
+D:\gsb\T006\
+├── A\        A 窗口在这里跑
+└── B\        B 窗口在这里跑
 ```
 
-两份都来自 `t004/base`，内容逐字节一致（想自查就 `Get-FileHash -Algorithm SHA256` 对一遍），
-所以"同一起点"是构造出来的，不存在 A 的产物漏进 B 的问题。之后两个窗口各贴一次
-**完全相同的 prompt**、各只跑首轮即可。
+```bat
+t prep  T006 --root D:\gsb\T006          :: 按 t006/base 铺出 A / B 两份
+t reset T006 --side a                    :: 只重置 A（走 git reset --hard + clean -fdx）
+t reset T006 --side a --fresh            :: A 跑烂了？整个删掉重铺，只动 A
+t record T006 a --side a --session <A-SessionID>
+t record T006 b --side b --session <B-SessionID>
+```
 
-跑完分别记账，两个产物快照的父提交都会是 `t004/base`：
+新建题目时带上 `--root` 就会自动铺好 A / B：
 
 ```bat
-t record T004 a --workspace D:\gsb\T004-a --session <A-SessionID>
-t record T004 b --workspace D:\gsb\T004-b --session <B-SessionID>
+t new T007 --workspace <起始环境目录> --prompt-file p.txt --root D:\gsb\T007 ...
 ```
+
+为什么分两份：两个窗口指着同一个目录会互相覆盖，分开之后"同一起点"是构造出来的
+（两份都来自 `t007/base`，想自查就 `Get-FileHash -Algorithm SHA256` 逐文件对一遍），
+核验时看两个产物快照的父提交都是同一个 base 就行。
 
 注意：
 
@@ -76,9 +84,11 @@ t record T004 b --workspace D:\gsb\T004-b --session <B-SessionID>
 - 两个窗口里各自只能有 prompt；不要去对方的窗口里追问，也不要让两边互相看到。
 - 录屏照旧两段，各录各的。
 - 项目文档写的是"第一次跑完后 reset 再跑第二次"，那是单工作区的做法；它真正要保证的是
-  两次跑**同一起点**，而核验方式就是两个产物快照的父提交都是初始环境快照 —— 并行复制同样满足。
-- 要加 `--force` 是因为 `reset` 默认拒绝往这道题的"另一份"工作区里铺东西，防止手滑重置错目录。
-  这道题已经登记过的工作区会列在 `tasks/<题号>/.workspace` 里（只在本机，不入库）。
+  两次跑**同一起点**，而核验方式就是两个产物快照的父提交都是初始环境快照 —— 分成两份同样满足。
+- `--fresh` 只允许作用在名为 `A` / `B` 的目录上，防止手滑清错地方。
+- 工作区路径按本机登记在 `~/.coding-agent-tasks/workspaces.json`（不入库）：路径是本机状态，
+  而且建新题时会清空仓库工作区，记在 `tasks/` 里会被一起清掉。
+- 以前那种 `--workspace D:\...\ws-T006-a` 的写法仍然能用，不改也能跑。
 
 ## 两台电脑一起跑
 
