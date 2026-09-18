@@ -1,0 +1,17 @@
+{
+  "name": "隘口",
+  "tiles": [
+    "..........",
+    "..##...^^.",
+    "..#....^^.",
+    ".oo.......",
+    "......oo..",
+    ".^^....#..",
+    ".^^...##..",
+    ".........."
+  ],
+  "legend": {".": "plain", "#": "wall", "^": "high", "o": "cover"},
+  "player": {"spawn": [[1, 6], [1, 7], [2, 6]], "units": ["trooper", "marksman", "bulwark"]},
+  "enemy":  {"spawn": [[8, 1], [8, 0], [7, 1]], "units": ["scout", "trooper", "marksman"]},
+  "turn_limit": 20
+}

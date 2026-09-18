@@ -1,0 +1,10 @@
+{
+  "seed": 20260918,
+  "note": "同一 seed + 同一串指令，重放出来的战斗过程和结果必须完全一致",
+  "orders": [
+    {"op": "select", "unit": "player-2"},
+    {"op": "move", "unit": "player-2", "to": [3, 5]},
+    {"op": "attack", "unit": "player-2", "target": "enemy-0"},
+    {"op": "end_turn"}
+  ]
+}

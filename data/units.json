@@ -1,0 +1,8 @@
+{
+  "units": {
+    "scout":    {"name": "斥候",   "hp": 14, "move": 4, "range": 1, "damage": 4, "armor": 0, "speed": 7},
+    "trooper":  {"name": "步兵",   "hp": 22, "move": 3, "range": 1, "damage": 7, "armor": 1, "speed": 5},
+    "marksman": {"name": "狙击手", "hp": 16, "move": 2, "range": 4, "damage": 9, "armor": 0, "speed": 6},
+    "bulwark":  {"name": "重盾",   "hp": 30, "move": 2, "range": 1, "damage": 5, "armor": 3, "speed": 3}
+  }
+}
