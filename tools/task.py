@@ -58,13 +58,25 @@ def git(*args, cwd=REPO, check=True):
 
 def remote_slug():
     url = git("remote", "get-url", "origin", check=False)
-    if not url:
+    if not url or "github.com" not in url:
         return None, None
-    slug = url.rstrip("/").removesuffix(".git")
-    for prefix in ("https://github.com/", "git@github.com:"):
+    slug = url.rstrip("/")
+    if slug.endswith(".git"):
+        slug = slug[: -len(".git")]
+    for prefix in (
+        "https://github.com/",
+        "http://github.com/",
+        "git@github.com:",
+        "ssh://git@github.com/",
+    ):
         if slug.startswith(prefix):
             slug = slug[len(prefix):]
+            break
+    else:
+        return None, None
     owner, _, name = slug.partition("/")
+    if not owner or not name:
+        return None, None
     return owner, name
 
 
@@ -337,6 +349,14 @@ def cmd_report(args):
     meta = load_meta(task_id)
     init = meta["initial_snapshot"]
     a, b = meta["runs"]["A"], meta["runs"]["B"]
+
+    def local_link(entry, label):
+        path = entry.get("trajectory_local") or ""
+        if path and os.path.exists(path):
+            name = os.path.basename(path)
+            return f"{label}: [{name}]({path})"
+        return f"{label}: (未找到本地文件)"
+
     lines = [
         f"题目: {task_id} {meta.get('title') or ''}",
         f"任务类型: {meta.get('task_type')}",
@@ -356,6 +376,9 @@ def cmd_report(args):
         f"B-产物快照: {b.get('product_snapshot_permalink') or b.get('product_snapshot_sha')}",
     ]
     print("\n".join(lines))
+    print("\n--- 轨迹文件（可点击直达本机文件） ---")
+    print(local_link(a, "A-轨迹文件"))
+    print(local_link(b, "B-轨迹文件"))
     return 0
 
 
