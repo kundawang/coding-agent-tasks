@@ -267,8 +267,10 @@ def cmd_record(args):
 
     hits = find_trajectory.find(args.session)
     local_path = ""
+    source_path = ""
     if hits:
         src = hits[0]["path"]
+        source_path = src
         traj_dir = os.path.join(task_dir(task_id), "trajectories")
         os.makedirs(traj_dir, exist_ok=True)
         local_path = os.path.join(traj_dir, f"{role.upper()}-{args.session}.jsonl")
@@ -281,6 +283,7 @@ def cmd_record(args):
         "product_snapshot_sha": sha,
         "product_snapshot_permalink": permalink(sha),
         "trajectory_local": local_path,
+        "trajectory_source": source_path,
     })
     save_meta(task_id, meta)
     commit_all(f"{task_id.upper()} record {role.upper()} ({args.session})")
@@ -351,11 +354,14 @@ def cmd_report(args):
     a, b = meta["runs"]["A"], meta["runs"]["B"]
 
     def local_link(entry, label):
-        path = entry.get("trajectory_local") or ""
-        if path and os.path.exists(path):
-            name = os.path.basename(path)
-            return f"{label}: [{name}]({path})"
-        return f"{label}: (未找到本地文件)"
+        out = []
+        source = entry.get("trajectory_source") or ""
+        local = entry.get("trajectory_local") or ""
+        if source and os.path.exists(source):
+            out.append(f"{label}(原始文件): [{os.path.basename(source)}]({source})")
+        if local and os.path.exists(local):
+            out.append(f"{label}(仓库副本): [{os.path.basename(local)}]({local})")
+        return out or [f"{label}: (未找到本地文件)"]
 
     lines = [
         f"题目: {task_id} {meta.get('title') or ''}",
@@ -377,8 +383,8 @@ def cmd_report(args):
     ]
     print("\n".join(lines))
     print("\n--- 轨迹文件（可点击直达本机文件） ---")
-    print(local_link(a, "A-轨迹文件"))
-    print(local_link(b, "B-轨迹文件"))
+    for line in local_link(a, "A-轨迹文件") + local_link(b, "B-轨迹文件"):
+        print(line)
     return 0
 
 
