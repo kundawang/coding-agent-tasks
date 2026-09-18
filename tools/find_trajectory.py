@@ -6,16 +6,43 @@
 
 Codex:   ~/.codex/sessions/YYYY/MM/DD/rollout-<时间>-<session-id>.jsonl
 Claude:  ~/.claude/projects/<项目 slug>/<session-id>.jsonl
+
+跑题可能用单独的 CODEX_HOME（例如 ~/.codex-cli），所以除了默认目录，
+还会顺带扫 $CODEX_HOME 和家目录下所有 .codex* 目录。
 """
 
 import argparse
+import glob
 import json
 import os
 import sys
 
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 HOME = os.path.expanduser("~")
 CODEX_ROOT = os.path.join(HOME, ".codex", "sessions")
 CLAUDE_ROOT = os.path.join(HOME, ".claude", "projects")
+
+
+def codex_roots():
+    """默认 ~/.codex/sessions，外加 $CODEX_HOME/sessions 与家目录下所有 .codex*/sessions。"""
+    roots = [CODEX_ROOT]
+    extra = os.environ.get("CODEX_HOME")
+    if extra:
+        roots.append(os.path.join(extra, "sessions"))
+    roots.extend(sorted(glob.glob(os.path.join(HOME, ".codex*", "sessions"))))
+    seen, out = set(), []
+    for root in roots:
+        key = os.path.normcase(os.path.abspath(root))
+        if key in seen or not os.path.isdir(root):
+            continue
+        seen.add(key)
+        out.append(root)
+    return out
 
 
 def by_filename(root, session_id):
@@ -58,7 +85,8 @@ def by_content(root, session_id, limit=400):
 
 def find(session_id):
     found = []
-    for root, kind in ((CODEX_ROOT, "codex"), (CLAUDE_ROOT, "claude")):
+    search = [(root, "codex") for root in codex_roots()] + [(CLAUDE_ROOT, "claude")]
+    for root, kind in search:
         for path in by_filename(root, session_id):
             found.append({"kind": kind, "path": path, "match": "filename"})
         if not found:
@@ -80,8 +108,11 @@ def main():
 
     if not hits:
         print(f"没找到 SessionID {args.session_id} 对应的轨迹文件")
-        print(f"已搜索: {CODEX_ROOT}")
+        for root in codex_roots():
+            print(f"已搜索: {root}")
         print(f"已搜索: {CLAUDE_ROOT}")
+        print("提示：如果这次跑在另一台机器上，把那边的 "
+              "~/.codex/sessions/.../rollout-*.jsonl 拷到 tasks/<题号>/trajectories/ 即可。")
         return 1
 
     for hit in hits:

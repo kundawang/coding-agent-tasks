@@ -1,0 +1,8 @@
+{
+  "_comment": "飞书提交表坐标。records 里可以按题号固定 record_id，SUBMIT 就不必每次 --uid。",
+  "base_token": "BPO8bK6oAaLaGNsdTudckZZYnCf",
+  "table_id": "tblrqoHBXgrXZgos",
+  "submitter_name": "刘坤",
+  "submitter_open_id": "ou_c137a561d460ea0dcb8321e4d383dee1",
+  "records": {}
+}

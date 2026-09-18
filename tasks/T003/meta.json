@@ -6,7 +6,7 @@
   "difficulty": "困难",
   "language_framework": "JavaScript, HTML, CSS（原生 ES module，无构建）",
   "harness": "Codex CLI",
-  "harness_version": "",
+  "harness_version": "0.153.4",
   "os": "Windows",
   "env_level": "无外部依赖",
   "prompt_file": "prompt.md",
@@ -17,7 +17,7 @@
   },
   "runs": {
     "A": {
-      "session_id": "",
+      "session_id": "01a0b34b-d247-7d20-8ade-cad67e5762a3",
       "trajectory_local": "",
       "trajectory_url": "",
       "branch": "t003/a",
@@ -25,7 +25,7 @@
       "product_snapshot_permalink": ""
     },
     "B": {
-      "session_id": "",
+      "session_id": "01a0b393-6d81-75a3-b81d-c215531f9097",
       "trajectory_local": "",
       "trajectory_url": "",
       "branch": "t003/b",
@@ -33,5 +33,6 @@
       "product_snapshot_permalink": ""
     }
   },
-  "notes": ""
+  "notes": "",
+  "updated_at": "2026-09-18T16:36:48"
 }

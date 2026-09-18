@@ -2,10 +2,13 @@
 
     python tools/task.py new T001 --workspace <dir> --prompt-file <file> [选项]
     python tools/task.py record T001 a --workspace <dir> --session <SessionID>
+    python tools/task.py set T001 --gsb-conclusion "A 更好" --gsb-reason-file reason.md
     python tools/task.py reset T001 --workspace <dir>
     python tools/task.py report T001
     python tools/task.py list
     python tools/task.py push [T001]
+
+本机没装 Python 时用 uv 跑： uv run python tools/task.py ...
 """
 
 import argparse
@@ -17,6 +20,12 @@ import subprocess
 import sys
 
 import find_trajectory
+
+try:  # Windows 控制台/管道默认可能是 cp936，统一按 utf-8 输出避免中文乱码
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(TOOLS)
@@ -96,6 +105,19 @@ def raw_url(sha, path):
 def branches(task_id):
     key = task_id.lower()
     return {"base": f"{key}/base", "a": f"{key}/a", "b": f"{key}/b"}
+
+
+def ref(branch):
+    """分支引用：优先本地分支，退回 origin/<branch>。
+
+    刚 clone 下来的仓库只有远端分支，直接写 t003/base 会解析不到。
+    """
+    if git("rev-parse", "--verify", "--quiet", branch, check=False):
+        return branch
+    remote = f"origin/{branch}"
+    if git("rev-parse", "--verify", "--quiet", remote, check=False):
+        return remote
+    return ""
 
 
 def task_dir(task_id):
@@ -213,7 +235,10 @@ def sync_workspace_to_branch(task_id, role, workspace):
         git("checkout", "--orphan", br)
         git("rm", "-rf", "--cached", "-q", ".", check=False)
     else:
-        git("checkout", "-B", br, base)
+        start = ref(base)
+        if not start:
+            raise SystemExit(f"缺少初始快照分支 {base}，请先执行 new")
+        git("checkout", "-B", br, start)
     clear_worktree()
     copy_workspace(workspace)
     sha = commit_all(f"{task_id.upper()} {role} ({dt.date.today().isoformat()})")
@@ -269,8 +294,8 @@ def cmd_new(args):
         "notes": args.notes,
     }
     save_meta(task_id, meta)
-    commit_all(f"{task_id} metadata")
     write_workspace_record(task_id, args.workspace)
+    commit_all(f"{task_id} metadata")
 
     print(f"初始环境快照: {sha}")
     print(f"  branch    : {br}")
@@ -287,7 +312,7 @@ def cmd_record(args):
     role = args.role.lower()
     meta = load_meta(task_id)
     base = branches(task_id)["base"]
-    if not git("rev-parse", "--verify", "--quiet", base, check=False):
+    if not ref(base):
         raise SystemExit(f"缺少初始快照分支 {base}，请先执行 new")
     if not git("rev-parse", "--verify", "--quiet", meta["initial_snapshot"]["sha"], check=False):
         raise SystemExit("初始环境快照 commit 在当前仓库里找不到")
@@ -336,6 +361,72 @@ def cmd_record(args):
     return 0
 
 
+def cmd_set(args):
+    """补/改题目元数据：Harness 版本、GSB 结论与理由、录屏路径等。"""
+    task_id = args.id.upper()
+    meta = load_meta(task_id)
+    changed = []
+
+    for attr, key in (
+        ("title", "title"),
+        ("task_type", "task_type"),
+        ("difficulty", "difficulty"),
+        ("lang", "language_framework"),
+        ("harness", "harness"),
+        ("harness_version", "harness_version"),
+        ("os", "os"),
+        ("env_level", "env_level"),
+        ("validity", "validity"),
+        ("remark", "remark"),
+    ):
+        value = getattr(args, attr)
+        if value is not None:
+            meta[key] = value
+            changed.append(key)
+
+    if args.prompt_file:
+        with open(args.prompt_file, encoding="utf-8") as fh:
+            prompt = fh.read()
+        if not prompt.endswith("\n"):
+            prompt += "\n"
+        with open(os.path.join(task_dir(task_id), "prompt.md"), "w", encoding="utf-8") as fh:
+            fh.write(prompt)
+        changed.append("prompt.md")
+
+    if args.gsb_conclusion is not None or args.gsb_reason_file:
+        gsb = meta.setdefault("gsb", {})
+        if args.gsb_conclusion is not None:
+            gsb["conclusion"] = args.gsb_conclusion
+            changed.append("gsb.conclusion")
+        if args.gsb_reason_file:
+            with open(args.gsb_reason_file, encoding="utf-8") as fh:
+                gsb["reason"] = fh.read().strip()
+            gsb["reason_author"] = args.reason_author
+            changed.append("gsb.reason")
+
+    for role, path in (("A", args.a_recording), ("B", args.b_recording)):
+        if path:
+            meta["runs"][role]["recording_local"] = os.path.abspath(path)
+            changed.append(f"runs.{role}.recording_local")
+
+    # 轨迹 jsonl 不在本机时（例如跑在另一台机器上），至少要能把 SessionID 记下来
+    for role, sid in (("A", args.a_session), ("B", args.b_session)):
+        if sid:
+            meta["runs"][role]["session_id"] = sid.strip()
+            changed.append(f"runs.{role}.session_id")
+
+    if not changed:
+        raise SystemExit("没有要改的内容；用 python tools/task.py set --help 看可用参数")
+
+    meta["updated_at"] = dt.datetime.now().isoformat(timespec="seconds")
+    save_meta(task_id, meta)
+    commit_all(f"{task_id} set: {', '.join(changed)}")
+    print(f"已更新 {task_id}: {', '.join(changed)}")
+    if args.push:
+        cmd_push(argparse.Namespace(id=task_id))
+    return 0
+
+
 def cmd_reset(args):
     task_id = args.id.upper()
     recorded = read_workspace_record(task_id)
@@ -350,7 +441,10 @@ def cmd_reset(args):
         return 0
 
     base = branches(task_id)["base"]
-    tracked = {line for line in git("ls-tree", "-r", "--name-only", base).splitlines() if line}
+    base_ref = ref(base)
+    if not base_ref:
+        raise SystemExit(f"缺少初始快照分支 {base}，无法重置")
+    tracked = {line for line in git("ls-tree", "-r", "--name-only", base_ref).splitlines() if line}
 
     # 1) 删掉不属于初始快照的文件（node_modules/venv/构建产物等一并清掉）
     #    自底向上遍历：先删文件，再把空掉的目录收掉，同时保留 .taskworkspace 标记
@@ -372,7 +466,7 @@ def cmd_reset(args):
                     pass
 
     # 2) 用初始快照的内容覆盖回去
-    archive = subprocess.run(["git", "archive", base], cwd=REPO, capture_output=True)
+    archive = subprocess.run(["git", "archive", base_ref], cwd=REPO, capture_output=True)
     if archive.returncode != 0:
         raise SystemExit("git archive 失败")
     extract = subprocess.run(["tar", "-x", "-C", args.workspace], input=archive.stdout, capture_output=True)
@@ -385,20 +479,34 @@ def cmd_reset(args):
 
 
 def cmd_report(args):
+    if not args.id:
+        ids = [name for name in sorted(os.listdir(TASKS))
+               if not name.startswith("_") and os.path.isdir(os.path.join(TASKS, name))] \
+            if os.path.isdir(TASKS) else []
+        if not ids:
+            print("还没有题目")
+            return 0
+        for i, name in enumerate(ids):
+            if i:
+                print("\n" + "-" * 72 + "\n")
+            cmd_report(argparse.Namespace(id=name))
+        return 0
+
     task_id = args.id.upper()
     meta = load_meta(task_id)
     init = meta["initial_snapshot"]
     a, b = meta["runs"]["A"], meta["runs"]["B"]
+    gsb = meta.get("gsb") or {}
 
     def local_link(entry, label):
         out = []
         source = entry.get("trajectory_source") or ""
         local = entry.get("trajectory_local") or ""
         if source and os.path.exists(source):
-            out.append(f"{label}(原始文件): [{os.path.basename(source)}]({source})")
+            out.append(f"{label}（原始文件）: [{os.path.basename(source)}]({source})")
         if local and os.path.exists(local):
-            out.append(f"{label}(仓库副本): [{os.path.basename(local)}]({local})")
-        return out or [f"{label}: (未找到本地文件)"]
+            out.append(f"{label}（仓库副本）: [{os.path.basename(local)}]({local})")
+        return out or [f"{label}: （未找到本地文件）"]
 
     lines = [
         f"题目: {task_id} {meta.get('title') or ''}",
@@ -411,17 +519,25 @@ def cmd_report(args):
         f"初始环境快照: {init.get('permalink') or init.get('sha')}",
         f"A-SessionID: {a.get('session_id')}",
         f"A-轨迹文件: {a.get('trajectory_url') or '(待上传)'}",
-        f"  A-本地文件: {a.get('trajectory_local')}",
         f"A-产物快照: {a.get('product_snapshot_permalink') or a.get('product_snapshot_sha')}",
         f"B-SessionID: {b.get('session_id')}",
         f"B-轨迹文件: {b.get('trajectory_url') or '(待上传)'}",
-        f"  B-本地文件: {b.get('trajectory_local')}",
         f"B-产物快照: {b.get('product_snapshot_permalink') or b.get('product_snapshot_sha')}",
+        f"GSB 结论: {gsb.get('conclusion') or ''}",
+        f"GSB 理由: {len(gsb.get('reason') or '')} 字",
+        *([f"          （作者：{gsb.get('reason_author')}）"] if gsb.get("reason_author") else []),
+        f"有效性: {meta.get('validity') or '有效'}",
+        f"备注: {meta.get('remark') or ''}",
     ]
     print("\n".join(lines))
-    print("\n--- 轨迹文件（可点击直达本机文件） ---")
+    print("\n--- 轨迹文件（点一下直接打开本机文件） ---")
     for line in local_link(a, "A-轨迹文件") + local_link(b, "B-轨迹文件"):
         print(line)
+
+    for role, entry in (("A", a), ("B", b)):
+        rec = entry.get("recording_local") or ""
+        if rec and os.path.exists(rec):
+            print(f"{role}-运行录屏: [{os.path.basename(rec)}]({rec})")
     return 0
 
 
@@ -500,8 +616,32 @@ def build_parser():
     s.add_argument("--workspace", required=True)
     s.set_defaults(func=cmd_reset)
 
+    st = sub.add_parser("set", help="补/改题目的元数据（Harness 版本、GSB、录屏等）")
+    st.add_argument("id")
+    st.add_argument("--title")
+    st.add_argument("--task-type", dest="task_type")
+    st.add_argument("--difficulty")
+    st.add_argument("--lang")
+    st.add_argument("--harness")
+    st.add_argument("--harness-version", dest="harness_version")
+    st.add_argument("--os")
+    st.add_argument("--env-level", dest="env_level")
+    st.add_argument("--validity", help="有效 / 作废-工程故障 / 作废-环境未重置 / 作废-其他")
+    st.add_argument("--remark")
+    st.add_argument("--prompt-file", dest="prompt_file")
+    st.add_argument("--gsb-conclusion", dest="gsb_conclusion", help="A 更好 / Same / B 更好")
+    st.add_argument("--gsb-reason-file", dest="gsb_reason_file",
+                    help="人写好的 GSB 理由文件（本项目禁止 AI 代写）")
+    st.add_argument("--reason-author", dest="reason_author", help="理由作者，默认本人")
+    st.add_argument("--a-recording", dest="a_recording")
+    st.add_argument("--b-recording", dest="b_recording")
+    st.add_argument("--a-session", dest="a_session", help="A 的 SessionID（轨迹不在本机时用）")
+    st.add_argument("--b-session", dest="b_session", help="B 的 SessionID")
+    st.add_argument("--no-push", dest="push", action="store_false")
+    st.set_defaults(push=True, func=cmd_set)
+
     rep = sub.add_parser("report", help="输出提交表字段")
-    rep.add_argument("id")
+    rep.add_argument("id", nargs="?", help="题号；不给就输出所有题目")
     rep.set_defaults(func=cmd_report)
 
     ls = sub.add_parser("list", help="列出所有题目")
