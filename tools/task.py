@@ -211,21 +211,53 @@ def workspace_git_reset(workspace):
 
 
 def write_workspace_record(task_id, workspace):
-    """把工作区路径记进台账。一行一个：同一道题可以有多份副本（多台机器，或 A/B 并行）。"""
-    path = os.path.join(task_dir(task_id), WORKSPACE_RECORD)
+    """把工作区路径记下来（同一道题可以有多份副本：多台机器，或 A/B 并行）。
+
+    存在用户目录下，不入库 —— 工作区路径是本机状态，而且建新题时会清空仓库工作区，
+    记在 tasks/ 里会被一起清掉。
+    """
     target = os.path.abspath(workspace)
     if any(same_path(item, target) for item in read_workspace_records(task_id)):
         return
-    with open(path, "a", encoding="utf-8") as fh:
-        fh.write(target + "\n")
+    path = workspace_store_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    store = {}
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                store = json.load(fh)
+        except (json.JSONDecodeError, OSError):
+            store = {}
+    store.setdefault(task_id.upper(), []).append(target)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(store, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+
+
+def workspace_store_path():
+    return os.path.join(os.path.expanduser("~"), ".coding-agent-tasks", "workspaces.json")
 
 
 def read_workspace_records(task_id):
-    path = os.path.join(task_dir(task_id), WORKSPACE_RECORD)
-    if not os.path.exists(path):
-        return []
-    with open(path, encoding="utf-8") as fh:
-        return [line.strip() for line in fh if line.strip()]
+    records = []
+    legacy = os.path.join(task_dir(task_id), WORKSPACE_RECORD)
+    if os.path.exists(legacy):
+        with open(legacy, encoding="utf-8") as fh:
+            records.extend(line.strip() for line in fh if line.strip())
+    path = workspace_store_path()
+    if os.path.exists(path):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                records.extend(json.load(fh).get(task_id.upper(), []))
+        except (json.JSONDecodeError, OSError):
+            pass
+    seen, out = set(), []
+    for item in records:
+        key = os.path.normcase(os.path.abspath(item))
+        if key not in seen:
+            seen.add(key)
+            out.append(item)
+    return out
 
 
 def read_workspace_record(task_id):
