@@ -1,0 +1,37 @@
+{
+  "task_id": "T006",
+  "title": "neon-commute 网页版打歌游戏（从 0 实现）",
+  "created_at": "2026-09-18T17:26:37",
+  "task_type": "0-1 代码生成",
+  "difficulty": "困难",
+  "language_framework": "JavaScript, Canvas, Web Audio（原生 ES module，无构建）",
+  "harness": "Codex CLI",
+  "harness_version": "0.155.0",
+  "os": "Windows",
+  "env_level": "无外部依赖",
+  "prompt_file": "prompt.md",
+  "initial_snapshot": {
+    "branch": "t006/base",
+    "sha": "002fe71a248bdab98b313a92112b14b15b9c2978",
+    "permalink": "https://github.com/kundawang/coding-agent-tasks/commit/002fe71a248bdab98b313a92112b14b15b9c2978"
+  },
+  "runs": {
+    "A": {
+      "session_id": "",
+      "trajectory_local": "",
+      "trajectory_url": "",
+      "branch": "t006/a",
+      "product_snapshot_sha": "",
+      "product_snapshot_permalink": ""
+    },
+    "B": {
+      "session_id": "",
+      "trajectory_local": "",
+      "trajectory_url": "",
+      "branch": "t006/b",
+      "product_snapshot_sha": "",
+      "product_snapshot_permalink": ""
+    }
+  },
+  "notes": ""
+}
