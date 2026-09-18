@@ -42,3 +42,6 @@ credentials.json
 # 日志
 *.log
 npm-debug.log*
+
+# 每道题的工作区绝对路径（只在本机记账用，不上传）
+tasks/*/.workspace

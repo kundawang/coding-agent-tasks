@@ -21,7 +21,7 @@ import find_trajectory
 TOOLS = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(TOOLS)
 TASKS = os.path.join(REPO, "tasks")
-MARKER = ".taskworkspace"
+WORKSPACE_RECORD = ".workspace"  # 记在仓库里（不进工作区，避免给模型任何"这是评测题"的暗示）
 
 # 工作区里这些目录/文件属于"未跟踪的产物"，既不进快照也不参与重置
 EXCLUDES = {
@@ -44,7 +44,6 @@ EXCLUDES = {
     ".gradle",
     ".cache",
     ".idea",
-    ".taskworkspace",
 }
 
 
@@ -184,20 +183,21 @@ def workspace_git_reset(workspace):
     return True
 
 
-def write_marker(workspace, payload):
-    with open(os.path.join(workspace, MARKER), "w", encoding="utf-8") as fh:
-        json.dump(payload, fh, ensure_ascii=False, indent=2)
+def write_workspace_record(task_id, workspace):
+    path = os.path.join(task_dir(task_id), WORKSPACE_RECORD)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(os.path.abspath(workspace) + "\n")
 
 
-def read_marker(workspace):
-    path = os.path.join(workspace, MARKER)
+def read_workspace_record(task_id):
+    path = os.path.join(task_dir(task_id), WORKSPACE_RECORD)
     if not os.path.exists(path):
-        raise SystemExit(
-            f"拒绝操作：{workspace} 里没有 {MARKER} 标记，"
-            "为免误删请确认这是 task.py 管理的工作区。"
-        )
-    with open(path, encoding="utf-8") as fh:
-        return json.load(fh)
+        return ""
+    return open(path, encoding="utf-8").read().strip()
+
+
+def same_path(left, right):
+    return os.path.normcase(os.path.abspath(left)) == os.path.normcase(os.path.abspath(right))
 
 
 def sync_workspace_to_branch(task_id, role, workspace):
@@ -270,7 +270,7 @@ def cmd_new(args):
     }
     save_meta(task_id, meta)
     commit_all(f"{task_id} metadata")
-    write_marker(args.workspace, {"task_id": task_id, "role": "workspace", "base_branch": br})
+    write_workspace_record(task_id, args.workspace)
 
     print(f"初始环境快照: {sha}")
     print(f"  branch    : {br}")
@@ -338,13 +338,14 @@ def cmd_record(args):
 
 def cmd_reset(args):
     task_id = args.id.upper()
-    marker = read_marker(args.workspace)
-    if marker.get("task_id") != task_id:
-        raise SystemExit(f"标记属于 {marker.get('task_id')}，与 {task_id} 不符，已中止")
+    recorded = read_workspace_record(task_id)
+    if recorded and not same_path(recorded, args.workspace):
+        raise SystemExit(
+            f"拒绝操作：{task_id} 记录的工作区是 {recorded}，"
+            f"与你传入的 {args.workspace} 不一致，已中止。"
+        )
 
     if workspace_git_reset(args.workspace):
-        # clean -fdx 会把标记一起删掉，补回来
-        write_marker(args.workspace, marker)
         print(f"工作区已 git reset --hard 回最初提交，未跟踪文件已清掉，可以跑 B 了。")
         return 0
 
@@ -359,8 +360,6 @@ def cmd_reset(args):
         if rel == ".git" or rel.startswith(".git/"):
             continue
         for name in filenames:
-            if name == MARKER:
-                continue
             full = f"{rel}/{name}" if rel else name
             if full not in tracked:
                 os.remove(os.path.join(dirpath, name))
