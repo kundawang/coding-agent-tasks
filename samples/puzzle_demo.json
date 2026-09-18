@@ -1,0 +1,12 @@
+{
+  "seed": 20260918,
+  "difficulty": "normal",
+  "clues": [
+    {"type": "position", "a": {"category": "drink", "value": "可可"}, "n": 1},
+    {"type": "same",     "a": {"category": "person", "value": "洛宁"}, "b": {"category": "pet", "value": "鹦鹉"}},
+    {"type": "not_same", "a": {"category": "drink", "value": "乌龙"},  "b": {"category": "music", "value": "鼓"}},
+    {"type": "neighbor", "a": {"category": "pet", "value": "猫"},      "b": {"category": "drink", "value": "姜茶"}},
+    {"type": "left_of",  "a": {"category": "person", "value": "砚秋"}, "b": {"category": "person", "value": "阿澈"}}
+  ],
+  "note": "格式样例。真正生成出来的题必须满足：唯一解，且每条线索都删不得"
+}

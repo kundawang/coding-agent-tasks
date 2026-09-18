@@ -1,0 +1,14 @@
+{
+  "categories": {
+    "person": ["阿澈", "小满", "洛宁", "砚秋"],
+    "drink":  ["乌龙", "可可", "姜茶", "气泡水"],
+    "pet":    ["猫", "狗", "鹦鹉", "金鱼"],
+    "music":  ["钢琴", "二胡", "鼓", "长笛"]
+  },
+  "difficulties": {
+    "easy":   {"clue_count": 6},
+    "normal": {"clue_count": 9},
+    "hard":   {"clue_count": 12}
+  },
+  "clue_types": ["position", "same", "not_same", "neighbor", "left_of"]
+}
