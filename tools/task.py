@@ -15,6 +15,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -81,7 +82,11 @@ def remote_slug():
             slug = slug[len(prefix):]
             break
     else:
-        return None, None
+        # 远端 URL 里带了用户名或端口，例如 https://kundawang@github.com/o/r
+        match = re.search(r"github\.com[:/]+(.+)$", slug)
+        if not match:
+            return None, None
+        slug = match.group(1)
     owner, _, name = slug.partition("/")
     if not owner or not name:
         return None, None
