@@ -1,0 +1,7 @@
+{
+  "recipes": {
+    "ore_mining": {"in": {}, "out": {"ore": 1}},
+    "iron_plate": {"in": {"ore": 2}, "out": {"plate": 1}},
+    "gear":       {"in": {"plate": 2}, "out": {"gear": 1}}
+  }
+}

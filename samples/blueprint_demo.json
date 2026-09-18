@@ -1,0 +1,11 @@
+{
+  "name": "demo",
+  "note": "蓝图就是这个结构：机器 + 朝向。载入后要能直接接着跑",
+  "placements": [
+    {"kind": "miner",     "at": [1, 1], "facing": "east"},
+    {"kind": "belt",      "at": [2, 1], "facing": "east"},
+    {"kind": "smelter",   "at": [3, 1], "facing": "east"},
+    {"kind": "belt",      "at": [4, 1], "facing": "east"},
+    {"kind": "assembler", "at": [5, 1], "facing": "east"}
+  ]
+}

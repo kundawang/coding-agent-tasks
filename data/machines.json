@@ -1,0 +1,8 @@
+{
+  "machines": {
+    "miner":     {"name": "采矿机", "recipe": "ore_mining", "ticks_per_cycle": 10, "must_be_on_ore": true},
+    "smelter":   {"name": "熔炉",   "recipe": "iron_plate", "ticks_per_cycle": 20, "must_be_on_ore": false},
+    "assembler": {"name": "组装机", "recipe": "gear",       "ticks_per_cycle": 40, "must_be_on_ore": false},
+    "belt":      {"name": "传送带", "belt": true, "ticks_per_tile": 5}
+  }
+}
