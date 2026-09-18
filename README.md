@@ -55,13 +55,16 @@ submit T003                :: 飞书表格 dry-run，只看要写什么
 谁跑废了就单独清谁，另一轮完全不受影响。
 
 ```
-D:\gsb\T006\
+桌面\GSB出题\T006\          （本机就是 C:\Users\Administrator\Desktop\GSB出题）
 ├── A\        A 窗口在这里跑
 └── B\        B 窗口在这里跑
 ```
 
+本机的**固定位置**：`C:\Users\Administrator\Desktop\GSB出题\`，每道题一个目录，
+prompt 原文放在同级：`桌面\GSB出题\T0XX-prompt.txt`。
+
 ```bat
-t prep  T006 --root D:\gsb\T006          :: 按 t006/base 铺出 A / B 两份
+t prep  T006 --root "C:\Users\Administrator\Desktop\GSB出题\T006"   :: 按 t006/base 铺出 A / B 两份
 t reset T006 --side a                    :: 只重置 A（走 git reset --hard + clean -fdx）
 t reset T006 --side a --fresh            :: A 跑烂了？整个删掉重铺，只动 A
 t record T006 a --side a --session <A-SessionID>
@@ -71,7 +74,7 @@ t record T006 b --side b --session <B-SessionID>
 新建题目时带上 `--root` 就会自动铺好 A / B：
 
 ```bat
-t new T007 --workspace <起始环境目录> --prompt-file p.txt --root D:\gsb\T007 ...
+t new T007 --workspace <起始环境目录> --prompt-file "C:\Users\Administrator\Desktop\GSB出题\T007-prompt.txt" --root "C:\Users\Administrator\Desktop\GSB出题\T007" ...
 ```
 
 为什么分两份：两个窗口指着同一个目录会互相覆盖，分开之后"同一起点"是构造出来的
