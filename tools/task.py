@@ -148,12 +148,37 @@ def copy_workspace(src, dst=REPO):
             shutil.copy2(s, d)
 
 
-def commit_all(message):
-    git("add", "-A")
-    if not git("status", "--porcelain"):
-        return git("rev-parse", "HEAD")
-    git("commit", "-q", "-m", message)
-    return git("rev-parse", "HEAD")
+def commit_all(message, cwd=REPO):
+    git("add", "-A", cwd=cwd)
+    if not git("status", "--porcelain", cwd=cwd):
+        return git("rev-parse", "HEAD", cwd=cwd)
+    git("commit", "-q", "-m", message, cwd=cwd)
+    return git("rev-parse", "HEAD", cwd=cwd)
+
+
+def ensure_workspace_repo(workspace):
+    """工作区要是个 git 仓库：模型跑完可以自己提交产物，重置也能走 reset --hard。"""
+    git_dir = os.path.join(workspace, ".git")
+    if not os.path.isdir(git_dir):
+        git("init", "-q", "-b", "main", cwd=workspace)
+        if not git("config", "user.name", cwd=workspace, check=False):
+            git("config", "user.name", "kundawang", cwd=workspace)
+            git("config", "user.email", "kundawang@users.noreply.github.com", cwd=workspace)
+        commit_all("initial environment", cwd=workspace)
+        return True
+    return False
+
+
+def workspace_git_reset(workspace):
+    """把工作区 git 仓库硬重置到最初那次提交，并清掉未跟踪文件。"""
+    if not os.path.isdir(os.path.join(workspace, ".git")):
+        return False
+    roots = git("rev-list", "--max-parents=0", "HEAD", cwd=workspace, check=False).split()
+    if not roots:
+        return False
+    git("reset", "--hard", roots[-1], cwd=workspace)
+    git("clean", "-fdx", cwd=workspace)
+    return True
 
 
 def write_marker(workspace, payload):
@@ -202,6 +227,9 @@ def cmd_new(args):
         raise SystemExit(f"{dest} 已存在")
     with open(args.prompt_file, encoding="utf-8") as fh:
         prompt = fh.read()
+
+    if ensure_workspace_repo(args.workspace):
+        print(f"已把工作区初始化为 git 仓库: {args.workspace}")
 
     # 先做代码分支：这一步会清空仓库工作区，台账文件必须等它之后再写
     original = git("rev-parse", "--abbrev-ref", "HEAD")
@@ -310,6 +338,13 @@ def cmd_reset(args):
     marker = read_marker(args.workspace)
     if marker.get("task_id") != task_id:
         raise SystemExit(f"标记属于 {marker.get('task_id')}，与 {task_id} 不符，已中止")
+
+    if workspace_git_reset(args.workspace):
+        # clean -fdx 会把标记一起删掉，补回来
+        write_marker(args.workspace, marker)
+        print(f"工作区已 git reset --hard 回最初提交，未跟踪文件已清掉，可以跑 B 了。")
+        return 0
+
     base = branches(task_id)["base"]
     tracked = {line for line in git("ls-tree", "-r", "--name-only", base).splitlines() if line}
 
