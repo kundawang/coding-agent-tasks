@@ -37,6 +37,9 @@ WORKSPACE_RECORD = ".workspace"  # 记在仓库里（不进工作区，避免给
 # 一道题跑两轮，工作区按 A / B 两份摆放： <题目目录>/A  <题目目录>/B
 SIDES = ("A", "B")
 
+# 出好的 prompt 另存一份到桌面，方便双击打开、复制粘贴
+PROMPT_DIR_NAME = "prompt原文"
+
 # 工作区里这些目录/文件属于"未跟踪的产物"，既不进快照也不参与重置
 EXCLUDES = {
     ".git",
@@ -139,6 +142,41 @@ def load_meta(task_id):
         raise SystemExit(f"题目 {task_id} 不存在（缺 {path}）")
     with open(path, encoding="utf-8") as fh:
         return json.load(fh)
+
+
+def desktop_dir():
+    """桌面目录。Windows 上优先问系统（桌面可能被重定向），拿不到就退回 ~/Desktop。"""
+    if os.name == "nt":
+        try:
+            import ctypes
+            buf = ctypes.create_unicode_buffer(260)
+            # CSIDL_DESKTOPDIRECTORY = 0x0010
+            if ctypes.windll.shell32.SHGetFolderPathW(None, 0x0010, None, 0, buf) == 0:
+                if buf.value and os.path.isdir(buf.value):
+                    return buf.value
+        except Exception:
+            pass
+    candidate = os.path.join(os.path.expanduser("~"), "Desktop")
+    return candidate if os.path.isdir(candidate) else os.path.expanduser("~")
+
+
+def prompt_copy_path(task_id, meta):
+    """桌面副本的路径：<桌面>/prompt原文/T007-emberdeck.txt"""
+    title = (meta.get("title") or "").strip()
+    slug = title.split()[0] if title else task_id.lower()
+    return os.path.join(desktop_dir(), PROMPT_DIR_NAME, f"{task_id.upper()}-{slug}.txt")
+
+
+def drop_prompt_copy(task_id, meta=None):
+    """把 prompt 原文复制一份到桌面，双击就能打开、全选复制。"""
+    meta = meta or load_meta(task_id)
+    src = os.path.join(task_dir(task_id), meta.get("prompt_file") or "prompt.md")
+    if not os.path.exists(src):
+        return ""
+    dest = prompt_copy_path(task_id, meta)
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    shutil.copy2(src, dest)
+    return dest
 
 
 def save_meta(task_id, meta):
@@ -384,10 +422,13 @@ def cmd_new(args):
     save_meta(task_id, meta)
     write_workspace_record(task_id, args.workspace)
     commit_all(f"{task_id} metadata")
+    desktop_copy = drop_prompt_copy(task_id, meta)
 
     print(f"初始环境快照: {sha}")
     print(f"  branch    : {br}")
     print(f"  permalink : {permalink(sha)}")
+    if desktop_copy:
+        print(f"prompt 副本: {desktop_copy}")
 
     if args.root:
         print()
@@ -535,8 +576,38 @@ def cmd_set(args):
     save_meta(task_id, meta)
     commit_all(f"{task_id} set: {', '.join(changed)}")
     print(f"已更新 {task_id}: {', '.join(changed)}")
+    if args.prompt_file:
+        print(f"prompt 副本已同步: {drop_prompt_copy(task_id, meta)}")
     if args.push:
         cmd_push(argparse.Namespace(id=task_id))
+    return 0
+
+
+def cmd_prompt(args):
+    """把 prompt 原文同步到桌面的「prompt原文」文件夹。"""
+    if args.id:
+        ids = [args.id.upper()]
+    elif os.path.isdir(TASKS):
+        ids = sorted(name for name in os.listdir(TASKS)
+                     if not name.startswith("_") and os.path.isdir(os.path.join(TASKS, name)))
+    else:
+        ids = []
+    if not ids:
+        print("还没有题目")
+        return 0
+
+    folder = ""
+    for task_id in ids:
+        try:
+            dest = drop_prompt_copy(task_id)
+        except SystemExit as exc:
+            print(f"  {task_id}: 跳过（{exc}）")
+            continue
+        if dest:
+            folder = os.path.dirname(dest)
+            print(f"  {task_id} -> {os.path.basename(dest)}")
+    if folder:
+        print(f"\n桌面文件夹: {folder}")
     return 0
 
 
@@ -824,6 +895,10 @@ def build_parser():
     pr.add_argument("--root", required=True, help="题目目录，例如 D:\\gsb\\T007")
     pr.add_argument("--fresh", action="store_true", help="先清空再重铺")
     pr.set_defaults(func=cmd_prep)
+
+    pm = sub.add_parser("prompt", help="把 prompt 原文同步到桌面「prompt原文」文件夹")
+    pm.add_argument("id", nargs="?", help="题号；不给就同步全部")
+    pm.set_defaults(func=cmd_prompt)
 
     st = sub.add_parser("set", help="补/改题目的元数据（Harness 版本、GSB、录屏等）")
     st.add_argument("id")
