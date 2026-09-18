@@ -32,6 +32,14 @@ def ssh_ready():
     return os.path.exists(SSH_KEY)
 
 
+CONNECTION_ERRORS = ("Failed to connect", "Recv failure", "Connection was reset",
+                     "Could not connect to server")
+
+
+def is_connection_error(output):
+    return any(mark in output for mark in CONNECTION_ERRORS)
+
+
 def push_once(refs, via_ssh=False):
     cmd = ["git"]
     if via_ssh:
@@ -69,39 +77,47 @@ def main():
         raise SystemExit("没有可推的分支")
     print("准备推送:", ", ".join(refs))
 
-    use_ssh = args.ssh
-    for attempt in range(1, args.tries + 1):
-        if use_ssh and not ssh_ready():
-            print(f"想走 SSH 但没找到 {SSH_KEY}，先按 README 的说明把公钥加到 GitHub。")
-            return 1
-        code, output = push_once(refs, via_ssh=use_ssh)
-        if code == 0:
-            print(f"第 {attempt} 次成功（{'SSH' if use_ssh else 'HTTPS'}）。")
-            if output:
-                print(output)
-            owner, name = task_mod.remote_slug()
-            if owner:
-                print(f"https://github.com/{owner}/{name}")
-            return 0
-        print(f"第 {attempt} 次失败: {output.splitlines()[-1] if output else '(无输出)'}")
+    if args.ssh and not ssh_ready():
+        print(f"想走 SSH 但没找到 {SSH_KEY}。")
+        return 1
 
-        # HTTPS 打在 github.com:443 上，这台机器会间歇性被掐；换 SSH 试
-        if (not use_ssh and ssh_ready()
-                and ("Failed to connect" in output or "Recv failure" in output
-                     or "Connection was reset" in output)):
-            print("HTTPS 连不上，改走 SSH（ssh.github.com:443）…")
-            use_ssh = True
-            continue
+    ssh_blocked = False
+    for attempt in range(1, args.tries + 1):
+        # 每一轮都先试 HTTPS；只有确实连不上（不是权限问题）才顺带试一次 SSH
+        routes = [True] if args.ssh else [False]
+        if not args.ssh and ssh_ready() and not ssh_blocked:
+            routes.append(True)
+
+        for via_ssh in routes:
+            code, output = push_once(refs, via_ssh=via_ssh)
+            label = "SSH" if via_ssh else "HTTPS"
+            if code == 0:
+                print(f"第 {attempt} 次成功（{label}）。")
+                if output:
+                    print(output)
+                owner, name = task_mod.remote_slug()
+                if owner:
+                    print(f"https://github.com/{owner}/{name}")
+                return 0
+
+            lines = [ln for ln in (output or "").splitlines() if ln.strip()]
+            tail = lines[-4:] if lines else ["(无输出)"]
+            print(f"第 {attempt} 次 {label} 失败:")
+            for line in tail:
+                print(f"    {line}")
+            if via_ssh and ("Permission denied" in output or "repository exists" in output):
+                ssh_blocked = True
+                print("  SSH 被拒：公钥还没加到 GitHub 账号（https://github.com/settings/ssh/new）。")
+            if not via_ssh and not is_connection_error(output):
+                break        # 不是网络问题（权限之类），换通道也没用
 
         if attempt < args.tries:
             time.sleep(args.delay)
 
-    if not ssh_ready():
-        print(f"\n{args.tries} 次都没推上去，多半是 github.com:443 又被掐了。"
-              f"\n想彻底绕开：生成 SSH key 后加到 https://github.com/settings/ssh/new ，"
-              f"再用 push.cmd --ssh。")
-    else:
-        print(f"\n{args.tries} 次都没推上去，隔一会儿再跑一次同样的命令。")
+    print(f"\n{args.tries} 轮都没推上去。")
+    print("本地提交是安全的，等网络好一点再跑一次 push.cmd 就行。")
+    print(f"想彻底绕开 github.com:443：把 {SSH_KEY}.pub 贴到 "
+          f"https://github.com/settings/ssh/new ，之后 push.cmd 会自动走 SSH。")
     return 1
 
 
