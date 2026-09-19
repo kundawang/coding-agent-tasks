@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>emberdeck</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 开局界面 -->
+  <section id="screen-start" class="screen">
+    <h1>emberdeck</h1>
+    <p class="muted">单机卡牌构筑原型 · 一个人打 AI</p>
+    <div class="start-box">
+      <label for="seed-input">种子（同一个种子 = 完全一样的一局）</label>
+      <div class="row">
+        <input id="seed-input" type="text" placeholder="例如 12345，留空则随机">
+        <button id="btn-random-seed" title="随机一个">🎲</button>
+      </div>
+      <button id="btn-new-game" class="primary">开始新局</button>
+      <button id="btn-continue" class="hidden">继续上局</button>
+      <hr>
+      <label for="replay-input">把别人发的记录贴进来，一步步重放</label>
+      <textarea id="replay-input" rows="4" placeholder='{"format":"emberdeck-log", ...}'></textarea>
+      <button id="btn-load-replay">载入记录并重放</button>
+      <p id="start-error" class="error"></p>
+    </div>
+  </section>
+
+  <!-- 对战界面 -->
+  <section id="screen-game" class="screen hidden">
+    <header class="topbar">
+      <span id="game-info" class="muted"></span>
+      <span class="spacer"></span>
+      <button id="btn-export">导出记录</button>
+      <button id="btn-quit">放弃本局</button>
+    </header>
+
+    <div id="panel-enemy" class="combatant enemy">
+      <div class="name-row">
+        <span class="cname" id="enemy-name"></span>
+        <span class="hand-count" id="enemy-hand-count"></span>
+      </div>
+      <div class="hp-row"><div class="hpbar"><div id="enemy-hpbar" class="hpfill"></div></div><span id="enemy-hp"></span></div>
+      <div class="statuses" id="enemy-statuses"></div>
+      <div class="target-hint hidden" id="target-hint">点击这里打出选中的牌</div>
+    </div>
+
+    <div id="log-panel" class="log-panel"></div>
+
+    <div id="panel-player" class="combatant player">
+      <div class="name-row">
+        <span class="cname" id="player-name"></span>
+        <span id="player-energy" class="energy"></span>
+      </div>
+      <div class="hp-row"><div class="hpbar"><div id="player-hpbar" class="hpfill"></div></div><span id="player-hp"></span></div>
+      <div class="statuses" id="player-statuses"></div>
+    </div>
+
+    <div id="preview" class="preview hidden"></div>
+    <div id="hand" class="hand"></div>
+
+    <footer class="bottombar">
+      <span id="pile-info" class="muted"></span>
+      <span class="spacer"></span>
+      <button id="btn-end-turn" class="primary">结束回合</button>
+    </footer>
+  </section>
+
+  <!-- 重放界面 -->
+  <section id="screen-replay" class="screen hidden">
+    <header class="topbar">
+      <span id="replay-info" class="muted"></span>
+      <span class="spacer"></span>
+      <button id="btn-replay-exit">退出重放</button>
+    </header>
+    <div class="replay-controls">
+      <button id="btn-prev">← 上一步</button>
+      <span id="replay-step"></span>
+      <button id="btn-next">下一步 →</button>
+    </div>
+    <div id="replay-action" class="replay-action"></div>
+    <div id="replay-view"></div>
+  </section>
+
+  <!-- 导出记录弹窗 -->
+  <div id="modal-export" class="modal hidden">
+    <div class="modal-box">
+      <p>整局记录（复制发到群里，别人贴回来就能重放）：</p>
+      <textarea id="export-text" rows="10" readonly></textarea>
+      <div class="row">
+        <button id="btn-copy-export" class="primary">复制</button>
+        <button id="btn-close-export">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
