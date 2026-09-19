@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>branchscript</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+
+    <section id="screen-title" class="screen">
+      <h1 id="title-name">branchscript</h1>
+      <p class="muted" id="title-meta"></p>
+
+      <div class="panel" id="save-panel"></div>
+
+      <div class="panel">
+        <h2>载入对战记录</h2>
+        <p class="muted">把朋友导出的记录 JSON 贴进来，一步步重放他这局选了什么。</p>
+        <textarea id="record-input" rows="6" placeholder='{ "format": "branchscript-replay/1", ... }'></textarea>
+        <div class="row">
+          <button id="btn-replay">开始回放</button>
+          <span class="error-text" id="replay-error"></span>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-game" class="screen hidden">
+      <div class="topbar">
+        <span id="game-title" class="muted"></span>
+        <span id="save-status" class="muted"></span>
+        <button id="btn-abandon" class="ghost">放弃本局</button>
+      </div>
+      <div id="hud" class="hud hidden"></div>
+      <div id="notice" class="notice hidden"></div>
+      <article class="card fade-in" id="scene-card">
+        <p id="scene-text" class="scene-text"></p>
+        <div id="choices" class="choices"></div>
+      </article>
+    </section>
+
+    <section id="screen-end" class="screen hidden">
+      <div class="ending-badge">— 结局 —</div>
+      <div id="end-hud" class="hud hidden"></div>
+      <article class="card">
+        <p id="end-text" class="scene-text"></p>
+      </article>
+      <div class="panel">
+        <h2>本局记录</h2>
+        <textarea id="record-output" rows="10" readonly></textarea>
+        <div class="row">
+          <button id="btn-copy-record">复制记录</button>
+          <span class="muted" id="copy-status"></span>
+        </div>
+      </div>
+      <div class="row">
+        <button id="btn-again">再来一局</button>
+        <button id="btn-end-title" class="ghost">返回标题</button>
+      </div>
+    </section>
+
+    <section id="screen-replay" class="screen hidden">
+      <div class="topbar">
+        <strong id="replay-title"></strong>
+        <button id="btn-replay-close" class="ghost">返回标题</button>
+      </div>
+      <div class="muted" id="replay-progress"></div>
+      <div id="replay-hud" class="hud hidden"></div>
+      <div id="replay-notice" class="notice hidden"></div>
+      <article class="card fade-in" id="replay-card">
+        <p id="replay-text" class="scene-text"></p>
+        <div id="replay-choices" class="choices"></div>
+      </article>
+      <div class="row">
+        <button id="btn-replay-prev">上一步</button>
+        <button id="btn-replay-next">下一步</button>
+      </div>
+    </section>
+
+    <section id="screen-problem" class="screen hidden">
+      <h1>剧本没通过检查</h1>
+      <p class="muted">下面的问题改完刷新即可，位置都标到了具体场景 / 选项。</p>
+      <ul id="problem-list" class="problem-list"></ul>
+      <div class="row">
+        <button id="btn-problem-continue" class="hidden">我知道了，仍然继续</button>
+        <a class="button-like ghost" href=".">重新加载</a>
+      </div>
+    </section>
+
+  </main>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
