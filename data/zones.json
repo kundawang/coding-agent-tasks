@@ -1,0 +1,17 @@
+{
+  "tick_rate": 10,
+  "zones": [
+    {"id": "shelf",  "name": "浅滩", "from": 0,   "to": 50,  "visibility": 22, "pressure_penalty": 1.0,
+     "resources": [{"kind": "kelp",  "value": 12,  "per_sec": 1.0,  "respawn_sec": 40}],
+     "threats":   [{"kind": "current", "chance_per_min": 0.15, "drain_per_sec": 3.5}]},
+    {"id": "trench", "name": "海沟", "from": 50,  "to": 120, "visibility": 14, "pressure_penalty": 1.6,
+     "resources": [{"kind": "pearl", "value": 45,  "per_sec": 0.6,  "respawn_sec": 90}],
+     "threats":   [{"kind": "eel", "chance_per_min": 0.30, "drain_per_sec": 5.0}]},
+    {"id": "abyss",  "name": "深渊", "from": 120, "to": 200, "visibility": 8,  "pressure_penalty": 2.4,
+     "resources": [{"kind": "amber", "value": 120, "per_sec": 0.35, "respawn_sec": 150}],
+     "threats":   [{"kind": "vein", "chance_per_min": 0.45, "drain_per_sec": 7.0}]}
+  ],
+  "o2_base_per_sec": 0.8,
+  "o2_per_move_sec": 1.4,
+  "o2_per_drill_sec": 2.6
+}

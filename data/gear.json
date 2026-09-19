@@ -1,0 +1,11 @@
+{
+  "gear": {
+    "tank":     {"name": "气罐",   "o2_capacity": 120, "mass": 8},
+    "thruster": {"name": "推进器", "descend": 6, "ascend": 4.5, "strafe": 3},
+    "lamp":     {"name": "探照灯", "radius_bonus": 6, "power_per_sec": 0.4},
+    "drill":    {"name": "钻头",   "speed_mult": 1.4, "power_per_sec": 0.8},
+    "bag":      {"name": "采集袋", "capacity": 6, "mass": 1}
+  },
+  "start_credits": 300,
+  "hull": {"base_hp": 100, "pressure_safe_depth": 60, "damage_per_10m_below": 4}
+}

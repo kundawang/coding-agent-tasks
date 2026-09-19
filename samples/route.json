@@ -1,0 +1,11 @@
+{
+  "seed": 20260919,
+  "note": "一次下潜的操作记录；同 seed + 同一串操作，氧气、深度、收获必须完全一致",
+  "route": [
+    {"tick": 0,   "op": "descend"},
+    {"tick": 120, "op": "move", "dir": "east"},
+    {"tick": 240, "op": "drill"},
+    {"tick": 300, "op": "ascend"},
+    {"tick": 420, "op": "surface"}
+  ]
+}
