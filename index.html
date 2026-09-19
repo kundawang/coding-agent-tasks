@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Neon Commute · 午休打歌赛</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="stage" aria-label="游戏画面"></canvas>
+
+      <!-- 主菜单 -->
+      <section id="screen-menu" class="screen">
+        <div class="panel hero-panel">
+          <p class="kicker">午休打歌赛 · 4KEY</p>
+          <h1 id="menu-title">Neon Commute</h1>
+          <p class="sub" id="menu-meta">加载谱面中…</p>
+          <div class="btn-stack">
+            <button class="btn primary" id="btn-start">开始游戏（D F J K）</button>
+            <button class="btn" id="btn-calibrate">校准设备</button>
+            <button class="btn ghost" id="btn-board">排行榜</button>
+          </div>
+          <p class="hint">
+            <span id="menu-calib" class="calib-badge warn">未校准</span>
+            建议第一次打开先校准，约 10 秒。
+          </p>
+        </div>
+      </section>
+
+      <!-- 校准 -->
+      <section id="screen-calibrate" class="screen hidden">
+        <div class="panel narrow">
+          <h2>设备校准</h2>
+          <p class="sub" id="calib-status">点“开始”，听四拍，每听到一声按任意键（D / F / J / K）。</p>
+          <div class="calib-readout" id="calib-readout">– –</div>
+          <div class="btn-row">
+            <button class="btn primary" id="btn-calib-start">开始</button>
+            <button class="btn" id="btn-calib-retry" disabled>重测</button>
+            <button class="btn ghost" id="btn-calib-back">返回</button>
+          </div>
+          <p class="hint">
+            校准值 = 你点击时刻 − 拍点时刻（音频时钟，中位数）。
+            之后伴奏会整体提前该毫秒数起播。
+          </p>
+        </div>
+      </section>
+
+      <!-- 暂停 -->
+      <section id="screen-pause" class="screen overlay hidden">
+        <div class="panel narrow">
+          <h2>已暂停</h2>
+          <p class="sub">音乐与判定时钟都已冻结，继续后不会错位。</p>
+          <div class="btn-stack">
+            <button class="btn primary" id="btn-resume">继续（Esc）</button>
+            <button class="btn ghost" id="btn-quit">放弃本局</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 结算 -->
+      <section id="screen-result" class="screen hidden">
+        <div class="panel">
+          <div class="result-head">
+            <div>
+              <p class="kicker">成绩</p>
+              <h2 id="result-rank">–</h2>
+            </div>
+            <div class="result-score">
+              <span id="result-score">0</span>
+              <small id="result-acc">准确率 0%</small>
+            </div>
+          </div>
+          <div class="result-grid">
+            <div class="stat perfect"><em id="r-perfect">0</em><span>Perfect</span></div>
+            <div class="stat great"><em id="r-great">0</em><span>Great</span></div>
+            <div class="stat good"><em id="r-good">0</em><span>Good</span></div>
+            <div class="stat miss"><em id="r-miss">0</em><span>Miss</span></div>
+            <div class="stat"><em id="r-combo">0</em><span>最大连击</span></div>
+            <div class="stat"><em id="r-offset">–</em><span>校准状态</span></div>
+          </div>
+          <form id="save-form" class="save-row">
+            <input id="player-name" maxlength="16" placeholder="输入名字（最多 16 字）" autocomplete="off" />
+            <button class="btn primary" type="submit">保存成绩</button>
+          </form>
+          <p class="hint" id="save-hint"></p>
+          <div class="btn-row">
+            <button class="btn primary" id="btn-retry">再来一把</button>
+            <button class="btn" id="btn-result-board">看排行榜</button>
+            <button class="btn ghost" id="btn-result-menu">回主菜单</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 排行榜 -->
+      <section id="screen-board" class="screen hidden">
+        <div class="panel wide">
+          <h2>排行榜</h2>
+          <div class="table-wrap">
+            <table id="board-table">
+              <thead>
+                <tr>
+                  <th>#</th><th>名字</th><th>分数</th><th>准确率</th>
+                  <th>P/G/g/M</th><th>最大连击</th><th>校准</th><th>时间</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="btn-row">
+            <button class="btn primary" id="btn-export">导出 JSON</button>
+            <button class="btn" id="btn-import">导入 JSON 合并</button>
+            <button class="btn danger ghost" id="btn-clear">清空本机成绩</button>
+            <button class="btn ghost" id="btn-board-back">返回</button>
+          </div>
+          <textarea id="io-text" class="io-area hidden" placeholder="导出的 JSON 会出现在这里；要导入就把别人的 JSON 粘进来再点导入。"></textarea>
+        </div>
+      </section>
+
+      <!-- 浮动按钮 -->
+      <div class="float-tools">
+        <button class="icon-btn" id="btn-fullscreen" title="全屏（F11 / 浏览器菜单也可以）">⛶</button>
+      </div>
+    </main>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
