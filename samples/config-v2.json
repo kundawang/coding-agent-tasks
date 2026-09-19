@@ -1,0 +1,14 @@
+{
+  "name": "edge-gateway",
+  "port": 8443,
+  "mode": "fast",
+  "timeout": 4.5,
+  "tags": ["edge"],
+  "enabled": true,
+  "limits": { "qps": 250, "burst": 800 },
+  "upstreams": [
+    { "host": "10.0.1.11", "weight": 30 },
+    { "host": "10.0.1.12", "weight": 50 },
+    { "host": "10.0.1.13", "weight": 20 }
+  ]
+}
