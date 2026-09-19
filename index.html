@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>seedforge - 种子地牢生成器</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <aside id="panel">
+    <h1>seedforge</h1>
+    <label>预设
+      <select id="preset"></select>
+    </label>
+    <label>种子
+      <input id="seed" type="text" maxlength="64" autocomplete="off" />
+    </label>
+    <div class="grid2">
+      <label>宽 <input id="width" type="number" min="16" max="128" /></label>
+      <label>高 <input id="height" type="number" min="16" max="128" /></label>
+      <label>房间最小 <input id="roomMin" type="number" min="2" max="24" /></label>
+      <label>房间最大 <input id="roomMax" type="number" min="2" max="32" /></label>
+      <label>房间数 <input id="roomCount" type="number" min="1" max="120" /></label>
+      <label>走廊宽 <input id="corridorWidth" type="number" min="1" max="5" /></label>
+      <label>环路数 <input id="extraLoops" type="number" min="0" max="40" /></label>
+      <label>宝箱房 <input id="treasureRooms" type="number" min="0" max="20" /></label>
+    </div>
+    <button id="generate" class="primary">重新生成</button>
+    <div class="row">
+      <button id="share">复制链接</button>
+      <button id="export">导出 PNG</button>
+      <button id="coords">复制坐标</button>
+    </div>
+    <div id="status" style="display:none"></div>
+    <p class="legend">
+      <span class="sw spawn"></span>出生房
+      <span class="sw treasure"></span>宝箱房
+      <span class="sw room"></span>房间
+      <span class="sw corridor"></span>走廊
+    </p>
+  </aside>
+  <main id="map-wrap">
+    <canvas id="map"></canvas>
+  </main>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
