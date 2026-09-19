@@ -128,6 +128,22 @@ TASK_TYPE_ALIASES = {
     "代码测试": "代码测试",
 }
 
+# 「语言/框架」这一栏要求用英文半角标点，写入前统一转一下（中文词保留）
+ASCII_PUNCT = str.maketrans({
+    "，": ",", "、": ",", "。": ".", "；": ";", "：": ":",
+    "（": "(", "）": ")", "【": "[", "】": "]",
+    "「": '"', "」": '"', "『": '"', "』": '"', "《": "<", "》": ">",
+    "！": "!", "？": "?", "…": "...", "～": "~", "－": "-", "　": " ",
+})
+
+
+def ascii_punct(text):
+    """把全角标点换成英文半角（中文文字不动）。"""
+    out = (text or "").translate(ASCII_PUNCT)
+    out = re.sub(r"\s*,\s*", ", ", out)      # 逗号后统一留一个空格，跟文档示例一致
+    return out.strip()
+
+
 SHA40 = re.compile(r"\b[0-9a-f]{40}\b")
 
 
@@ -184,7 +200,7 @@ def build_fields(meta, task_id, args):
         "任务类型": sel(norm_task_type(meta.get("task_type"))),
         # 注意：这张表里「任务难度」是文本字段（不是下拉），要写字符串
         "任务难度": meta.get("difficulty") or None,
-        "语言/框架": meta.get("language_framework") or None,
+        "语言/框架": ascii_punct(meta.get("language_framework")) or None,
         "Harness": sel(meta.get("harness")),
         "Harness 版本": meta.get("harness_version") or None,
         "操作系统": sel(meta.get("os")),
