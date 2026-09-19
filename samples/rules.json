@@ -1,0 +1,9 @@
+{
+  "tickRate": 60,
+  "matchMs": 180000,
+  "captureRadius": 70,
+  "captureMs": 2500,
+  "scorePerSecond": 5,
+  "speed": 240,
+  "spawnImmunityMs": 1500
+}
