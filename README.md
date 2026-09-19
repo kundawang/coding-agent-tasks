@@ -49,6 +49,21 @@ t report T003
 submit T003                :: 飞书表格 dry-run，只看要写什么
 ```
 
+## 题号规则
+
+这个仓库上同时有两条出题工作流在跑，题号错开，避免撞车：
+
+| 前缀 | 谁在用 | 分支 |
+|---|---|---|
+| `T0xx` | 另一条工作流 | `t0xx/base|a|b` |
+| `lk-xxx` | 本线（从 `lk-001` 开始） | `lk-xxx/base|a|b` |
+
+```bat
+t new lk-002 --workspace <起始环境> --prompt-file p.txt --title ... --task-type ... --lang ...
+```
+
+题号大小写在工具里会统一成大写目录（`lk-002` -> `tasks/LK-002`），分支名保持小写。
+
 ## prompt 原文在桌面
 
 每道题的 prompt 都会自动复制一份到桌面：
