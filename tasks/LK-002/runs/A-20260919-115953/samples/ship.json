@@ -1,8 +1,0 @@
-{
-  "speed": 320,
-  "hitRadius": 2.5,
-  "shotIntervalMs": 90,
-  "shotDamage": 5,
-  "lives": 3,
-  "bombCount": 2
-}

@@ -635,10 +635,37 @@ def workspace_dirty(workspace):
     return bool(status.strip())
 
 
+def hard_clean_workspace(workspace):
+    """原地把工作区清回最初提交：文件、未跟踪产物、模型留下的分支/stash/reflog 一起清。
+
+    不删除目录本身 —— 窗口开着的时候目录被占用，删目录会 PermissionError，
+    而且删一半会把正在跑的那一轮弄坏。
+    """
+    if not is_git_repo(workspace):
+        return ""
+    roots = git("rev-list", "--max-parents=0", "HEAD", cwd=workspace, check=False).split()
+    if not roots:
+        return ""
+    current = git("rev-parse", "--abbrev-ref", "HEAD", cwd=workspace, check=False).strip()
+    git("reset", "--hard", roots[-1], cwd=workspace, check=False)
+    git("clean", "-fdx", cwd=workspace, check=False)
+    for ref in git("for-each-ref", "--format=%(refname:short)", "refs/heads",
+                   cwd=workspace, check=False).splitlines():
+        ref = ref.strip()
+        if ref and ref != current:
+            git("branch", "-D", ref, cwd=workspace, check=False)
+    git("stash", "clear", cwd=workspace, check=False)
+    git("reflog", "expire", "--expire=now", "--all", cwd=workspace, check=False)
+    git("gc", "--prune=now", "--quiet", cwd=workspace, check=False)
+    return "原地重置到最初提交"
+
+
 def archive_run(task_id, side, workspace):
     """把这一轮跑出来的东西原样留一份，之后工作区才能放心重置。"""
     label = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
-    out = os.path.join(task_dir(task_id), RUNS_DIR, f"{side}-{label}")
+    # 存到本机用户目录，不进仓库：失败产物不该被推到 GitHub，也少一个模型可能翻到的地方
+    out = os.path.join(os.path.expanduser("~"), ".coding-agent-tasks", RUNS_DIR,
+                       task_id.upper(), f"{side}-{label}")
     os.makedirs(out, exist_ok=True)
     copied = 0
     for name in os.listdir(workspace):
@@ -659,7 +686,7 @@ def archive_run(task_id, side, workspace):
 
 
 def cmd_cycle(args):
-    """开窗口前用的：上一轮的残留先存档，然后把工作区重置成全新。"""
+    """开窗口前用的：上一轮的残留先存档，然后把工作区**整个清掉重新铺**。"""
     task_id = args.id.upper()
     workspace = resolve_workspace(args, task_id)
     side = (getattr(args, "side", "") or os.path.basename(workspace)).upper()
@@ -675,12 +702,51 @@ def cmd_cycle(args):
         if archived:
             print(f"上一轮的东西先存了一份: {archived}")
 
-    how = materialize(task_id, base_ref, workspace)
+    # 原地清干净（不删目录本身）：窗口开着的时候目录被占用，删目录会失败；
+    # 而且这样连模型在 .git 里留下的提交、分支、stash、reflog 也一起清掉
+    how = hard_clean_workspace(workspace)
+    if not how:
+        how = materialize(task_id, base_ref, workspace)
     write_workspace_record(task_id, workspace, root=task_root(task_id))
     if trust_project(workspace):
         print(f"已把 {workspace} 加进 codexcli 信任列表（以后不再问）")
+
+    added, missing, changed = compare_with_base(base_ref, workspace)
+    if added or missing or changed:
+        how = materialize(task_id, base_ref, workspace)
+        added, missing, changed = compare_with_base(base_ref, workspace)
     print(f"{side} 工作区已就绪: {workspace}   [{how}]")
+    if added or missing or changed:
+        print("  注意：和初始环境对不上，请把下面这段发我")
+        for label, items in (("多出来的", added), ("少了", missing), ("内容不同", changed)):
+            for item in items[:10]:
+                print(f"    {label}: {item}")
+    else:
+        print("  已核验：与初始环境逐文件一致，没有任何残留")
     return 0
+
+
+def compare_with_base(base_ref, workspace):
+    """把工作区内容和初始快照逐文件比一遍，返回（多的、少的、内容不同的）。"""
+    want = {}
+    for line in git("ls-tree", "-r", base_ref).splitlines():
+        if not line.strip():
+            continue
+        meta, path = line.split("\t", 1)
+        want[path] = meta.split()[2]
+
+    have = {}
+    for dirpath, dirnames, filenames in os.walk(workspace):
+        dirnames[:] = [d for d in dirnames if d != ".git"]
+        for name in filenames:
+            full = os.path.join(dirpath, name)
+            rel = os.path.relpath(full, workspace).replace("\\", "/")
+            have[rel] = git("hash-object", "--", full, cwd=workspace, check=False)
+
+    added = sorted(set(have) - set(want))
+    missing = sorted(set(want) - set(have))
+    changed = sorted(p for p in set(have) & set(want) if have[p] != want[p])
+    return added, missing, changed
 
 
 def write_launchers(task_id, root, meta):
