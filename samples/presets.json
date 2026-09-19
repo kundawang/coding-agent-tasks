@@ -1,0 +1,8 @@
+{
+  "presets": [
+    { "id": "cramped", "name": "窄道", "width": 64, "height": 48, "roomMin": 5, "roomMax": 11, "roomCount": 18, "corridorWidth": 1, "extraLoops": 2, "treasureRooms": 3 },
+    { "id": "open", "name": "大厅", "width": 80, "height": 60, "roomMin": 9, "roomMax": 18, "roomCount": 12, "corridorWidth": 3, "extraLoops": 5, "treasureRooms": 2 },
+    { "id": "maze", "name": "迷宫", "width": 72, "height": 72, "roomMin": 3, "roomMax": 6, "roomCount": 40, "corridorWidth": 1, "extraLoops": 0, "treasureRooms": 5 },
+    { "id": "cave", "name": "洞窟", "width": 96, "height": 64, "roomMin": 6, "roomMax": 14, "roomCount": 24, "corridorWidth": 2, "extraLoops": 8, "treasureRooms": 4 }
+  ]
+}
