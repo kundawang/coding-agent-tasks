@@ -17,12 +17,13 @@
   },
   "runs": {
     "A": {
-      "session_id": "",
-      "trajectory_local": "",
+      "session_id": "01a0b481-1e18-7d21-b429-bc2f96b0540b",
+      "trajectory_local": "C:\\Users\\Administrator\\Documents\\Codex\\2026-09-18\\https-bcnrsnl3m9wk-feishu-cn-wiki-fgvdwpdlhigokzkfr7eckeqanud\\outputs\\coding-agent-tasks\\tasks\\T006\\trajectories\\A-01a0b481-1e18-7d21-b429-bc2f96b0540b.jsonl",
       "trajectory_url": "",
       "branch": "t006/a",
-      "product_snapshot_sha": "",
-      "product_snapshot_permalink": ""
+      "product_snapshot_sha": "12561f358e0fecaf98f443425b8593e85668edbc",
+      "product_snapshot_permalink": "https://github.com/kundawang/coding-agent-tasks/commit/12561f358e0fecaf98f443425b8593e85668edbc",
+      "trajectory_source": "C:\\Users\\Administrator\\.codex-cli\\sessions\\2026\\09\\18\\rollout-2026-09-18T20-32-35-01a0b481-1e18-7d21-b429-bc2f96b0540b.jsonl"
     },
     "B": {
       "session_id": "",
