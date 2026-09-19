@@ -1,0 +1,9 @@
+{
+  "sheet": {"width": 480, "length": 1600},
+  "house": {"cx": 240, "cy": 1300, "outer": 180, "inner": 60},
+  "hog_line_y": 900,
+  "stones_per_side": 4,
+  "stone_radius": 14,
+  "tick_rate": 120,
+  "max_seconds_per_shot": 12
+}

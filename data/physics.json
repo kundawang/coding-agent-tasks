@@ -1,0 +1,10 @@
+{
+  "mass": 19,
+  "friction": 0.55,
+  "restitution": 0.92,
+  "curl_accel": 45,
+  "speed_range": [180, 520],
+  "angle_range_deg": [-12, 12],
+  "curl_range": [-1, 1],
+  "stop_speed": 6
+}

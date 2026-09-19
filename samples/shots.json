@@ -1,0 +1,10 @@
+{
+  "seed": 20260919,
+  "note": "每投一石记一条；同 seed + 同一串投掷，最终停位必须完全一致",
+  "shots": [
+    {"side": "player", "speed": 420, "angle_deg": 2,  "curl": 0.3,  "release_x": 240},
+    {"side": "enemy",  "speed": 460, "angle_deg": -3, "curl": -0.4, "release_x": 235},
+    {"side": "player", "speed": 380, "angle_deg": 6,  "curl": 0.7,  "release_x": 250},
+    {"side": "enemy",  "speed": 500, "angle_deg": 0,  "curl": 0.0,  "release_x": 240}
+  ]
+}
