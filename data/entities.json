@@ -1,0 +1,15 @@
+{
+  "enemies": {
+    "rat":    {"name": "巨鼠", "hp": 8,  "damage": 2, "sight": 5, "speed": 1, "xp": 3},
+    "stalker":{"name": "潜行者", "hp": 14, "damage": 5, "sight": 8, "speed": 1, "xp": 8},
+    "warden": {"name": "看守", "hp": 26, "damage": 8, "sight": 6, "speed": 1, "xp": 20}
+  },
+  "items": {
+    "potion": {"name": "药水", "heal": 12},
+    "torch":  {"name": "火把", "view_bonus": 3, "turns": 60},
+    "key":    {"name": "铜钥匙", "opens": "locked"},
+    "coin":   {"name": "钱币", "value": 5}
+  },
+  "player": {"hp": 30, "bag": 8},
+  "spawn": {"enemies_per_room": [0, 2], "items_per_room": [0, 3], "locked_rooms": 2}
+}

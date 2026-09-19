@@ -1,0 +1,5 @@
+{
+  "seed": 20260919,
+  "note": "同一个 seed 必须生成完全一样的地图；同一串指令必须走到完全一样的位置",
+  "moves": ["east", "east", "south", "south", "south", "east", "north", "north", "wait", "south"]
+}
