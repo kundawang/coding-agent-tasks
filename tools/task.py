@@ -47,6 +47,9 @@ TASKS_DIR_NAME = "GSB题目"
 LAUNCH_COLORS = ["#8e44ad", "#d35400", "#16a085", "#c2185b",
                  "#2980b9", "#c0392b", "#27ae60", "#7f8c8d"]
 
+# 跑题用的 Codex CLI 配置（codexcli 启动器里把 CODEX_HOME 指到这儿）
+RUNS_DIR = "runs"
+
 # 工作区里这些目录/文件属于"未跟踪的产物"，既不进快照也不参与重置
 EXCLUDES = {
     ".git",
@@ -595,12 +598,98 @@ def launch_color(task_id):
     return LAUNCH_COLORS[index % len(LAUNCH_COLORS)]
 
 
+def codex_cli_config_path():
+    """跑题用的那份 codexcli 配置。"""
+    home = os.environ.get("CODEX_HOME") or os.path.join(os.path.expanduser("~"), ".codex-cli")
+    return os.path.join(home, "config.toml")
+
+
+def trust_project(path):
+    """把目录加进 codexcli 的信任列表，免得每次开窗口都弹「是否信任此目录」。
+
+    Codex CLI 的信任是逐目录精确匹配的，所以每道题的 A / B 都要各写一条。
+    """
+    cfg = codex_cli_config_path()
+    if not os.path.exists(cfg):
+        return False
+    key = os.path.abspath(path).lower().replace("/", "\\")
+    with open(cfg, encoding="utf-8") as fh:
+        text = fh.read()
+    if f"[projects.'{key}']" in text:
+        return False
+    backup = cfg + ".bak-before-trust"
+    if not os.path.exists(backup):
+        shutil.copy2(cfg, backup)
+    with open(cfg, "a", encoding="utf-8") as fh:
+        fh.write(f"\n[projects.'{key}']\ntrust_level = \"trusted\"\n")
+    return True
+
+
+def workspace_dirty(workspace):
+    """工作区里是不是有初始环境之外的东西（跑过一轮就会有）。"""
+    if not os.path.isdir(workspace):
+        return False
+    if not is_git_repo(workspace):
+        return bool([n for n in os.listdir(workspace) if n not in EXCLUDES])
+    status = git("status", "--porcelain", cwd=workspace, check=False)
+    return bool(status.strip())
+
+
+def archive_run(task_id, side, workspace):
+    """把这一轮跑出来的东西原样留一份，之后工作区才能放心重置。"""
+    label = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+    out = os.path.join(task_dir(task_id), RUNS_DIR, f"{side}-{label}")
+    os.makedirs(out, exist_ok=True)
+    copied = 0
+    for name in os.listdir(workspace):
+        if name in EXCLUDES or name == ".git":
+            continue
+        src = os.path.join(workspace, name)
+        dst = os.path.join(out, name)
+        if os.path.isdir(src):
+            shutil.copytree(src, dst, dirs_exist_ok=True,
+                            ignore=shutil.ignore_patterns(*EXCLUDES))
+        else:
+            shutil.copy2(src, dst)
+        copied += 1
+    if not copied:
+        shutil.rmtree(out, ignore_errors=True)
+        return ""
+    return out
+
+
+def cmd_cycle(args):
+    """开窗口前用的：上一轮的残留先存档，然后把工作区重置成全新。"""
+    task_id = args.id.upper()
+    workspace = resolve_workspace(args, task_id)
+    side = (getattr(args, "side", "") or os.path.basename(workspace)).upper()
+    if side not in SIDES:
+        side = "X"
+    base_ref = ref(branches(task_id)["base"])
+    if not base_ref:
+        raise SystemExit(f"缺少初始快照分支 {branches(task_id)['base']}")
+
+    archived = ""
+    if workspace_dirty(workspace):
+        archived = archive_run(task_id, side, workspace)
+        if archived:
+            print(f"上一轮的东西先存了一份: {archived}")
+
+    how = materialize(task_id, base_ref, workspace)
+    write_workspace_record(task_id, workspace, root=task_root(task_id))
+    if trust_project(workspace):
+        print(f"已把 {workspace} 加进 codexcli 信任列表（以后不再问）")
+    print(f"{side} 工作区已就绪: {workspace}   [{how}]")
+    return 0
+
+
 def write_launchers(task_id, root, meta):
     """在题目目录下写 A/B 启动器：双击开一个带名字和颜色的终端标签，直接进这一轮的工作区。"""
     slug = ((meta.get("title") or "").strip().split() or [task_id.lower()])[0]
     slug = re.sub(r"[^A-Za-z0-9._-]+", "", slug) or task_id.lower()
     color = launch_color(task_id)
     written = []
+    os.makedirs(root, exist_ok=True)
 
     for side in SIDES:
         label = f"{task_id.upper()}-{side} {slug}"
@@ -616,22 +705,18 @@ def write_launchers(task_id, root, meta):
             f'set "TASK={task_id.upper()}"\r\n'
             f'set "SIDE={side}"\r\n'
             f'set "REPO={REPO}"\r\n'
-            "rem the workspace may have been deleted by accident -- put it back from git\r\n"
-            'dir /b /a-d "%DIR%" 2>nul | findstr . >nul || call :restore\r\n'
+            "rem always start from a clean initial environment: the previous attempt is\r\n"
+            "rem archived under tasks\\<ID>\\runs\\ first, so nothing is ever lost\r\n"
+            'echo [launcher] preparing %TASK%-%SIDE% ...\r\n'
+            'pushd "%REPO%"\r\n'
+            "uv run python tools\\task.py cycle %TASK% --side %SIDE%\r\n"
+            "popd\r\n"
             "where wt >nul 2>nul\r\n"
             "if errorlevel 1 goto plain\r\n"
             'wt -w 0 nt --title "%LABEL%" --tabColor "%COLOR%" '
             '--suppressApplicationTitle -d "%DIR%" cmd /k codexcli\r\n'
             "if errorlevel 1 goto plain\r\n"
             "exit /b 0\r\n"
-            "\r\n"
-            ":restore\r\n"
-            'echo [launcher] "%DIR%" is empty -- restoring it from git ...\r\n'
-            'pushd "%REPO%"\r\n'
-            "uv run python tools\\task.py reset %TASK% --side %SIDE%\r\n"
-            "popd\r\n"
-            "exit /b 0\r\n"
-            "\r\n"
             ":plain\r\n"
             "title %LABEL%\r\n"
             'cd /d "%DIR%"\r\n'
@@ -662,6 +747,8 @@ def cmd_launch(args):
             continue
         for path in write_launchers(task_id, root, meta):
             print(f"  {os.path.basename(path)}  ->  {path}")
+        for side in SIDES:
+            trust_project(os.path.join(root, side))
     return 0
 
 
@@ -712,6 +799,7 @@ def cmd_rebuild(args):
             dest = os.path.join(root, side)
             how = materialize(task_id, base_ref, dest)
             write_workspace_record(task_id, dest, root=root)
+            trust_project(dest)
             print(f"    {side}: {how}")
         write_launchers(task_id, root, meta)
     parents = {os.path.dirname(task_root(t)) for t in ids if task_root(t)}
@@ -848,6 +936,8 @@ def cmd_prep(args):
     print(f"\n两轮分别在这两个目录里跑，用完全相同的 prompt：")
     print(f"  A 窗口: cd \"{os.path.join(root, 'A')}\"")
     print(f"  B 窗口: cd \"{os.path.join(root, 'B')}\"")
+    for side in SIDES:
+        trust_project(os.path.join(root, side))
     for path in write_launchers(task_id, root, load_meta(task_id)):
         print(f"  启动器 : {path}")
     print(f"跑完记账： t record {task_id} a --side a --session <A-SessionID>")
@@ -1045,6 +1135,13 @@ def build_parser():
     lc.add_argument("id", nargs="?", help="题号；不给就处理所有已登记的题目")
     lc.add_argument("--root", help="题目目录；默认用本机登记过的")
     lc.set_defaults(func=cmd_launch)
+
+    cy = sub.add_parser("cycle", help="开窗口前准备：上一轮存档，工作区重置成全新")
+    cy.add_argument("id")
+    cy.add_argument("--side", help="a 或 b")
+    cy.add_argument("--workspace")
+    cy.add_argument("--root")
+    cy.set_defaults(func=cmd_cycle)
 
     rb = sub.add_parser("rebuild", help="按登记重新铺出所有题目的 A / B 工作区与启动器")
     rb.add_argument("id", nargs="?", help="题号；不给就全部")
