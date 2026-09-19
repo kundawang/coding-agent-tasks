@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>emberdeck · 单机卡牌原型</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">emberdeck <span class="sub" id="encounterName"></span></div>
+    <div class="seedbox">
+      <label>种子 <input id="seedInput" type="text" inputmode="numeric" placeholder="数字，如 12345"></label>
+      <button id="newGameBtn" type="button">新开一局</button>
+      <span class="hint">也可以用地址 ?seed=12345</span>
+    </div>
+    <div class="actions">
+      <button id="exportBtn" type="button">导出记录</button>
+      <button id="importBtn" type="button">导入记录</button>
+    </div>
+  </header>
+
+  <main id="board" class="board">
+    <section class="side enemy-side" id="enemyZone">
+      <div class="combatant" id="enemyCombatant">
+        <div class="portrait">🤖</div>
+        <div class="stats">
+          <div class="name" id="enemyName"></div>
+          <div class="hpbar"><div class="hpfill enemy-hp" id="enemyHpFill"></div><span id="enemyHpText"></span></div>
+          <div class="chips" id="enemyChips"></div>
+        </div>
+        <div class="piles">
+          <button class="pile" data-side="enemy" data-pile="drawPile" type="button">抽 <b id="enemyDrawCount">0</b></button>
+          <button class="pile" data-side="enemy" data-pile="discard" type="button">弃 <b id="enemyDiscardCount">0</b></button>
+          <button class="pile" data-side="enemy" data-pile="exhaust" type="button">耗 <b id="enemyExhaustCount">0</b></button>
+        </div>
+      </div>
+      <div class="enemy-hand" id="enemyHand" title="AI 的手牌（背面）"></div>
+    </section>
+
+    <section class="midbar">
+      <div class="turninfo" id="turnInfo"></div>
+      <div class="targetbar" id="targetBar" hidden>
+        <span id="targetPrompt"></span>
+        <button id="targetEnemyBtn" class="tbtn" type="button" hidden>目标：敌方</button>
+        <button id="targetSelfBtn" class="tbtn" type="button" hidden>目标：自己</button>
+        <button id="cancelTargetBtn" class="tbtn ghost" type="button">取消（Esc）</button>
+      </div>
+      <div class="logbox" id="logBox"></div>
+    </section>
+
+    <section class="side player-side" id="playerZone">
+      <div class="player-hand" id="playerHand"></div>
+      <div class="combatant" id="playerCombatant">
+        <div class="portrait">🧑</div>
+        <div class="stats">
+          <div class="name" id="playerName"></div>
+          <div class="hpbar"><div class="hpfill player-hp" id="playerHpFill"></div><span id="playerHpText"></span></div>
+          <div class="chips" id="playerChips"></div>
+        </div>
+        <div class="energy-orb" id="energyOrb"><b id="energyCur">0</b><span id="energyMax">/0</span></div>
+        <div class="piles">
+          <button class="pile" data-side="player" data-pile="drawPile" type="button">抽 <b id="playerDrawCount">0</b></button>
+          <button class="pile" data-side="player" data-pile="discard" type="button">弃 <b id="playerDiscardCount">0</b></button>
+          <button class="pile" data-side="player" data-pile="exhaust" type="button">耗 <b id="playerExhaustCount">0</b></button>
+        </div>
+        <button id="endTurnBtn" class="endturn" type="button">结束回合</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="floatLayer" class="float-layer"></div>
+
+  <div id="gameOverModal" class="modal" hidden>
+    <div class="modal-card">
+      <h2 id="gameOverTitle"></h2>
+      <p id="gameOverText"></p>
+      <div class="modal-row">
+        <button id="gameOverExportBtn" type="button">导出这局记录</button>
+        <button id="gameOverNewBtn" type="button">再来一局</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="recordModal" class="modal" hidden>
+    <div class="modal-card wide">
+      <h2 id="recordTitle">对战记录</h2>
+      <p class="hint" id="recordHint"></p>
+      <textarea id="recordText" spellcheck="false"></textarea>
+      <div class="modal-row">
+        <button id="recordCopyBtn" type="button">复制</button>
+        <button id="recordLoadBtn" type="button">粘贴并重放</button>
+        <button id="recordCloseBtn" class="ghost" type="button">关闭</button>
+      </div>
+      <div id="recordVerify" class="verify"></div>
+    </div>
+  </div>
+
+  <div id="viewerBar" class="viewer-bar" hidden>
+    <div class="viewer-controls">
+      <button id="vwPrev" type="button">◀ 上一步</button>
+      <input id="vwScrub" type="range" min="0" step="1" value="0">
+      <button id="vwNext" type="button">下一步 ▶</button>
+      <button id="vwPlay" type="button">自动播放</button>
+      <span id="vwPos" class="hint"></span>
+    </div>
+    <div id="vwStepDesc" class="step-desc"></div>
+    <button id="vwExit" type="button">退出回放，回到对局</button>
+  </div>
+
+  <div id="pileModal" class="modal" hidden>
+    <div class="modal-card wide">
+      <h2 id="pileTitle"></h2>
+      <div id="pileList" class="pile-list"></div>
+      <div class="modal-row"><button id="pileCloseBtn" class="ghost" type="button">关闭</button></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
