@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>emberdeck · 复盘</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .replay-wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
+    .replay-controls { display: flex; gap: 10px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
+    .step-list {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+      padding: 8px; max-height: 340px; overflow-y: auto; font-size: 13px;
+    }
+    .step-row {
+      display: flex; gap: 10px; align-items: center;
+      padding: 4px 8px; border-radius: 6px; cursor: pointer;
+    }
+    .step-row:hover { background: var(--panel-2); }
+    .step-row.current { background: #3a3150; }
+    .step-row.bad { color: #ff9d8a; }
+    .step-row .idx { width: 44px; color: var(--muted); }
+    .step-row .sum { margin-left: auto; color: var(--muted); font-family: monospace; }
+    .state-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .state-card {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 10px; padding: 10px 14px;
+    }
+    .state-card h3 { margin: 0 0 6px; font-size: 15px; }
+    .kv { color: var(--muted); font-size: 13px; }
+    .verify-ok { color: var(--green); font-weight: 700; }
+    .verify-bad { color: var(--red); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">emberdeck · 复盘</div>
+    <div class="seed-row">
+      <button id="backBtn" type="button">← 回牌桌</button>
+      <span id="recordSeed" class="kv"></span>
+    </div>
+  </header>
+
+  <div class="replay-wrap">
+    <textarea id="recordInput" spellcheck="false" placeholder="把战报 JSON 粘贴到这里，然后点“载入战报”"></textarea>
+    <div class="replay-controls">
+      <button id="loadRecordBtn" type="button">载入战报</button>
+      <button id="firstBtn" type="button">⏮ 开局</button>
+      <button id="prevBtn" type="button">◀ 上一步</button>
+      <button id="nextBtn" type="button">下一步 ▶</button>
+      <button id="lastBtn" type="button">结局 ⏭</button>
+      <label><input type="checkbox" id="autoPlayChk" style="width:auto" /> 自动播放</label>
+      <span id="verifyResult"></span>
+    </div>
+
+    <div class="step-list" id="stepList"></div>
+
+    <div class="state-grid">
+      <div class="state-card" id="playerState"><h3></h3><div class="kv"></div></div>
+      <div class="state-card" id="enemyState"><h3></h3><div class="kv"></div></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script type="module" src="src/replay-ui.js"></script>
+</body>
+</html>

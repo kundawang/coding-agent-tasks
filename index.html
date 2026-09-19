@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>emberdeck</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">emberdeck</div>
+    <div class="seed-row">
+      <label for="seedInput">种子</label>
+      <input id="seedInput" type="text" inputmode="numeric" placeholder="例如 12345" />
+      <button id="newGameBtn" type="button">开新局</button>
+      <button id="randomSeedBtn" type="button" title="随机一个种子">🎲</button>
+      <button id="replayLink" type="button" class="linkish">复盘页</button>
+    </div>
+    <div class="record-row">
+      <button id="exportBtn" type="button">导出战报</button>
+      <button id="importBtn" type="button">导入战报</button>
+    </div>
+  </header>
+
+  <main class="board">
+    <section class="side enemy-side" id="enemySide">
+      <div class="combatant" id="enemyCombatant">
+        <div class="portrait enemy-portrait" id="enemyPortrait">
+          <span class="target-hint">点这里出攻击牌</span>
+        </div>
+        <div class="stats">
+          <div class="name" id="enemyName">陪练机</div>
+          <div class="hp-bar"><div class="hp-fill" id="enemyHpFill"></div>
+            <span class="hp-text" id="enemyHpText"></span></div>
+          <div class="badges" id="enemyBadges"></div>
+        </div>
+        <div class="piles">
+          <span>抽 <b id="enemyDrawCount">0</b></span>
+          <span>弃 <b id="enemyDiscardCount">0</b></span>
+          <span>耗 <b id="enemyExhaustCount">0</b></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="midbar">
+      <div class="turn-info" id="turnInfo"></div>
+      <div class="log" id="log"></div>
+      <button id="endTurnBtn" type="button">结束回合</button>
+    </section>
+
+    <section class="side player-side">
+      <div class="combatant">
+        <div class="portrait player-portrait" id="playerPortrait"></div>
+        <div class="stats">
+          <div class="name" id="playerName">你</div>
+          <div class="hp-bar"><div class="hp-fill player" id="playerHpFill"></div>
+            <span class="hp-text" id="playerHpText"></span></div>
+          <div class="badges" id="playerBadges"></div>
+        </div>
+        <div class="energy-orb" id="energyOrb"><b id="energyText">0</b><span>/<i id="energyMax">3</i></span></div>
+        <div class="piles">
+          <span>抽 <b id="playerDrawCount">0</b></span>
+          <span>弃 <b id="playerDiscardCount">0</b></span>
+          <span>耗 <b id="playerExhaustCount">0</b></span>
+        </div>
+      </div>
+      <div class="hand" id="hand"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal hidden" id="recordModal">
+    <div class="modal-box">
+      <h2 id="recordModalTitle">战报</h2>
+      <p class="modal-hint" id="recordModalHint"></p>
+      <textarea id="recordText" spellcheck="false"></textarea>
+      <div class="modal-actions">
+        <button id="recordCopyBtn" type="button">复制</button>
+        <button id="recordLoadBtn" type="button">去复盘页打开</button>
+        <button id="recordCloseBtn" type="button">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="overModal">
+    <div class="modal-box">
+      <h2 id="overTitle"></h2>
+      <p>种子 <code id="overSeed"></code>，可以导出战报发群里复盘。</p>
+      <div class="modal-actions">
+        <button id="overExportBtn" type="button">导出战报</button>
+        <button id="overCloseBtn" type="button">留在牌桌</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
