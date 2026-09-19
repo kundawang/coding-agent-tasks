@@ -226,30 +226,45 @@ def backfill(task_id, cfg, uid, record_id):
     """记账 A / B → 推分支 → 写表。返回一段结果说明。"""
     out = []
     meta = task_mod.load_meta(task_id)
-    for side, role in zip(task_mod.SIDES, ("a", "b")):
-        ws, where = product_workspace(task_id, side)
-        sess = meta_sid = None
-        sessions = collect_sessions()
+    # sync_workspace_to_branch 会把仓库切到产物分支、并清空工作区，
+    # 所以必须记下当前分支、做完再切回来 —— 忘了切回来会把台账提交到错误的分子上
+    original = task_mod.git("rev-parse", "--abbrev-ref", "HEAD")
+    try:
+        for side, role in zip(task_mod.SIDES, ("a", "b")):
+            ws, where = product_workspace(task_id, side)
+            sessions = collect_sessions()
+            root = task_mod.task_root(task_id)
+            key = os.path.normcase(os.path.abspath(os.path.join(root, side)))
+            sess = sessions.get(key)
+            if not ws or not sess:
+                out.append(f"  {side}: 找不到产物（{where or '无'}）或会话，跳过")
+                continue
+            br, sha = task_mod.sync_workspace_to_branch(task_id, role, ws)
+            info = meta["runs"][side.upper()]
+            info.update({"session_id": sess["session"], "branch": br,
+                         "product_snapshot_sha": sha,
+                         "product_snapshot_permalink": task_mod.permalink(sha),
+                         "trajectory_local": "", "trajectory_source": sess["path"],
+                         "trajectory_url": ""})
+            out.append(f"  {side}: 产物快照 {sha[:10]}（{where}）")
+    finally:
+        task_mod.git("checkout", "-q", original)
+
+    # 轨迹文件等切回台账分支之后再放进来，免得落在产物分支上
+    sessions = collect_sessions()
+    for side in task_mod.SIDES:
         root = task_mod.task_root(task_id)
         key = os.path.normcase(os.path.abspath(os.path.join(root, side)))
         sess = sessions.get(key)
-        if not ws or not sess:
-            out.append(f"  {side}: 找不到产物（{where or '无'}）或会话，跳过")
-            continue
-        br, sha = task_mod.sync_workspace_to_branch(task_id, role, ws)
         info = meta["runs"][side.upper()]
-        info.update({"session_id": sess["session"], "branch": br,
-                     "product_snapshot_sha": sha,
-                     "product_snapshot_permalink": task_mod.permalink(sha),
-                     "trajectory_local": "", "trajectory_source": sess["path"],
-                     "trajectory_url": ""})
+        if not sess or not info.get("product_snapshot_sha"):
+            continue
         traj_dir = os.path.join(task_mod.task_dir(task_id), "trajectories")
         os.makedirs(traj_dir, exist_ok=True)
         dest = os.path.join(traj_dir, f"{side.upper()}-{sess['session']}.jsonl")
         import shutil
         shutil.copy2(sess["path"], dest)
         info["trajectory_local"] = dest
-        out.append(f"  {side}: 产物快照 {sha[:10]}（{where}）")
     task_mod.save_meta(task_id, meta)
 
     # 推分支（失败不阻塞，提醒即可）
