@@ -1,0 +1,12 @@
+{
+  "name": "render-heavy",
+  "seed": "20260919",
+  "warmupRuns": 5,
+  "runs": 40,
+  "tasks": [
+    { "kind": "renderList", "weight": 6, "items": 2000 },
+    { "kind": "sortRows", "weight": 3, "items": 20000 },
+    { "kind": "computeHash", "weight": 1, "bytes": 2000000 },
+    { "kind": "filterRows", "weight": 4, "items": 50000 }
+  ]
+}
