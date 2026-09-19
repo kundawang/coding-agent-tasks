@@ -31,6 +31,7 @@ SESSION_ROOTS = [
 ]
 SETTLE_SECONDS = 60      # 轨迹多久没动才算停下来
 WINDOW_MATCH_SECONDS = 30  # 会话开始时间和进程启动时间差多少算同一个窗口
+SUSPECT_LINES = 80       # 轨迹行数少于这个数，多半是中断的那一轮，不自动回填
 
 
 def session_start(name):
@@ -127,6 +128,18 @@ def survey():
     now = dt.datetime.now()
     ready, pending, done = [], [], []
 
+    # 表里已经出现过这些初始快照的题，就不再回填一遍（可能是别人填的）
+    already = set()
+    try:
+        cfg = submit_mod.load_config()
+        for rec in submit_mod.list_my_records(cfg):
+            sha = submit_mod.strip_markdown_link(rec["snapshot"])
+            m = re.search(r"\b[0-9a-f]{40}\b", sha or "")
+            if m:
+                already.add(m.group(0))
+    except SystemExit:
+        pass
+
     for task_id in task_ids():
         try:
             meta = task_mod.load_meta(task_id)
@@ -137,21 +150,27 @@ def survey():
             continue
         info = {"task_id": task_id, "meta": meta, "root": root, "sides": {}}
         complete = True
+        suspect = []
         for side in task_mod.SIDES:
             key = os.path.normcase(os.path.abspath(os.path.join(root, side)))
             sess = sessions.get(key)
-            entry = {"session": sess, "closed": False, "settled": False, "recorded": False}
+            entry = {"session": sess, "closed": False, "settled": False, "recorded": False,
+                     "lines": 0}
             if sess:
                 entry["closed"] = not window_open(sess, starts)
                 entry["settled"] = (now - dt.datetime.fromtimestamp(sess["mtime"])).total_seconds() >= SETTLE_SECONDS
                 entry["recorded"] = (meta["runs"][side].get("session_id") == sess["session"])
+                entry["lines"] = sum(1 for _ in open(sess["path"], encoding="utf-8", errors="replace"))
+                if entry["lines"] < SUSPECT_LINES:
+                    suspect.append(f"{side} 只有 {entry['lines']} 行")
             info["sides"][side] = entry
             if not (entry["session"] and entry["closed"] and entry["settled"]):
                 complete = False
 
-        if meta.get("submit"):
+        info["suspect"] = suspect
+        if meta.get("submit") or (meta["initial_snapshot"]["sha"] in already):
             done.append(info)
-        elif complete:
+        elif complete and not suspect:
             ready.append(info)
         else:
             pending.append(info)
@@ -166,7 +185,7 @@ def describe(info):
         if not s:
             lines.append(f"  {side}: 没找到会话")
             continue
-        rows = sum(1 for _ in open(s["path"], encoding="utf-8", errors="replace"))
+        rows = e["lines"] or sum(1 for _ in open(s["path"], encoding="utf-8", errors="replace"))
         size = round(os.path.getsize(s["path"]) / 1024)
         state = "已结束" if e["closed"] else "窗口还开着"
         lines.append(f"  {side}: {s['session']}  {state}  {rows} 行 / {size} KB"
@@ -180,6 +199,26 @@ def first_free_uid(cfg):
         if not submit_mod.strip_markdown_link(rec["snapshot"]).strip():
             return rec["uid"], rec["record_id"]
     return "", ""
+
+
+def state_path():
+    return os.path.join(HOME, ".coding-agent-tasks", "ready-state.json")
+
+
+def load_state():
+    try:
+        with open(state_path(), encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
+
+
+def save_state(state):
+    path = state_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(state, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
 
 
 def backfill(task_id, cfg, uid, record_id):
@@ -264,6 +303,26 @@ def main():
 
     ready, pending, done = survey()
     print(f"扫描完成：可以回填 {len(ready)} 道，还没跑完 {len(pending)} 道，已回填 {len(done)} 道")
+
+    # 疑似没跑完的，只提醒"新出现的"，免得每十分钟刷一遍同样的内容
+    state = load_state()
+    known = set(state.get("suspects") or [])
+    now_suspects = []
+    for info in pending:
+        if not info.get("suspect"):
+            continue
+        key = info["task_id"] + "|" + "；".join(info["suspect"])
+        now_suspects.append(key)
+        if key in known:
+            continue
+        print()
+        print("=" * 66)
+        print("  疑似没跑完，需要你自己确认（不会自动回填）：")
+        for line in describe(info):
+            print("    " + line)
+        print("    " + "；".join(info["suspect"]))
+    state["suspects"] = now_suspects
+    save_state(state)
 
     if not ready:
         return 0
