@@ -26,12 +26,13 @@
       "trajectory_source": "C:\\Users\\Administrator\\.codex-cli\\sessions\\2026\\09\\18\\rollout-2026-09-18T20-39-25-01a0b487-5e9c-75d0-8c95-26fbd732c1bc.jsonl"
     },
     "B": {
-      "session_id": "",
-      "trajectory_local": "",
+      "session_id": "01a0b487-ad7c-7e83-b235-b647862c8379",
+      "trajectory_local": "C:\\Users\\Administrator\\Documents\\Codex\\coding-agent-tasks\\tasks\\T006\\trajectories\\B-01a0b487-ad7c-7e83-b235-b647862c8379.jsonl",
       "trajectory_url": "",
       "branch": "t006/b",
-      "product_snapshot_sha": "",
-      "product_snapshot_permalink": ""
+      "product_snapshot_sha": "42a55faaa351d3db31eabc7ffd9eb1d47505a40c",
+      "product_snapshot_permalink": "https://github.com/kundawang/coding-agent-tasks/commit/42a55faaa351d3db31eabc7ffd9eb1d47505a40c",
+      "trajectory_source": "C:\\Users\\Administrator\\.codex-cli\\sessions\\2026\\09\\18\\rollout-2026-09-18T20-39-45-01a0b487-ad7c-7e83-b235-b647862c8379.jsonl"
     }
   },
   "notes": ""
