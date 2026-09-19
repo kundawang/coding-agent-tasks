@@ -19,7 +19,7 @@
     "A": {
       "session_id": "01a0b481-1e18-7d21-b429-bc2f96b0540b",
       "trajectory_local": "C:\\Users\\Administrator\\Documents\\Codex\\2026-09-18\\https-bcnrsnl3m9wk-feishu-cn-wiki-fgvdwpdlhigokzkfr7eckeqanud\\outputs\\coding-agent-tasks\\tasks\\T006\\trajectories\\A-01a0b481-1e18-7d21-b429-bc2f96b0540b.jsonl",
-      "trajectory_url": "",
+      "trajectory_url": "https://raw.githubusercontent.com/kundawang/coding-agent-tasks/7c8d5facd196b95239096ec80a3ee26507fde123/tasks/T006/trajectories/A-01a0b481-1e18-7d21-b429-bc2f96b0540b.jsonl",
       "branch": "t006/a",
       "product_snapshot_sha": "12561f358e0fecaf98f443425b8593e85668edbc",
       "product_snapshot_permalink": "https://github.com/kundawang/coding-agent-tasks/commit/12561f358e0fecaf98f443425b8593e85668edbc",
