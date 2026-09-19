@@ -1,0 +1,12 @@
+{
+  "units": {
+    "roller":    {"name": "滚筒", "speed": 4.2, "hp": 100, "ink_max": 100, "spray": {"kind": "line", "width": 1.5, "rate": 6}, "ink_cost": 3},
+    "sprinkler": {"name": "喷枪", "speed": 3.4, "hp": 100, "ink_max": 120, "spray": {"kind": "circle", "radius": 3.5, "rate": 4}, "ink_cost": 8},
+    "sniper":    {"name": "长管", "speed": 3.0, "hp": 100, "ink_max": 80,  "spray": {"kind": "line", "width": 0.8, "rate": 9}, "ink_cost": 6}
+  },
+  "ink_refill_per_second": 12,
+  "ink_pad_refill_per_second": 60,
+  "hp_regen_per_second": 6,
+  "damage_per_hit": 18,
+  "respawn_seconds": 5
+}

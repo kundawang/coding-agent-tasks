@@ -1,0 +1,10 @@
+{
+  "seed": 20260919,
+  "note": "每 tick 记一条输入；同 seed + 同一串输入，涂色结果必须完全一致",
+  "inputs": [
+    {"tick": 0,  "move": [1, 0],  "spray": true},
+    {"tick": 30, "move": [0, 1],  "spray": true},
+    {"tick": 60, "move": [-1, 0], "spray": false},
+    {"tick": 90, "move": [0, -1], "spray": true}
+  ]
+}
