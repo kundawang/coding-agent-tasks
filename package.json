@@ -1,0 +1,7 @@
+{
+  "name": "seedforge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "种子驱动的确定性地牢地图生成器，纯静态、无依赖、无构建。"
+}
