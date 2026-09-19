@@ -1,0 +1,116 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: #0d0f1a;
+  color: #e8ecff;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  overflow: hidden;
+}
+
+.screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.hidden { display: none !important; }
+
+h1 { font-size: 42px; letter-spacing: 4px; }
+h2 { font-size: 30px; }
+.sub { color: #8a91bd; }
+.hint { color: #5a618f; font-size: 13px; }
+
+button {
+  background: #1c2140;
+  color: #e8ecff;
+  border: 1px solid #2a2f4d;
+  border-radius: 8px;
+  padding: 10px 28px;
+  font-size: 16px;
+  cursor: pointer;
+}
+button:hover:not(:disabled) { background: #262c55; }
+button:disabled { opacity: 0.4; cursor: default; }
+button.primary { background: #2f6ec2; border-color: #2f6ec2; }
+button.primary:hover { background: #3a7fd8; }
+
+.menu-buttons { display: flex; gap: 12px; }
+
+#game-canvas { width: 100%; height: 100%; display: block; }
+
+#pause-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(13, 15, 26, 0.75);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 32px;
+}
+
+#btn-fullscreen {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  font-size: 18px;
+  opacity: 0.6;
+}
+
+#calib-pulse {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: #1c2140;
+  border: 2px solid #2a2f4d;
+  transition: transform 0.05s;
+}
+#calib-pulse.beat { background: #2f6ec2; transform: scale(1.25); }
+
+.result-line { font-size: 20px; color: #ffd94d; min-height: 28px; }
+
+.rank { font-size: 56px; color: #ffd94d; font-weight: bold; }
+.score-line { font-size: 28px; font-family: monospace; }
+
+table.stats {
+  border-collapse: collapse;
+  min-width: 340px;
+}
+table.stats td, table.stats th {
+  padding: 6px 16px;
+  text-align: left;
+  border-bottom: 1px solid #2a2f4d;
+}
+table.stats th { color: #8a91bd; font-weight: normal; }
+
+.save-row { display: flex; gap: 8px; }
+.save-row input {
+  background: #1c2140;
+  border: 1px solid #2a2f4d;
+  border-radius: 8px;
+  color: #e8ecff;
+  padding: 10px 14px;
+  font-size: 16px;
+  width: 180px;
+}
+
+.io-row { display: flex; gap: 24px; }
+.io-row textarea {
+  width: 320px;
+  background: #121526;
+  color: #8a91bd;
+  border: 1px solid #2a2f4d;
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 11px;
+  padding: 8px;
+  resize: none;
+}
+.io-row button { margin-top: 8px; }

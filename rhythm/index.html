@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DFJK 打歌台</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 主菜单 -->
+  <section id="screen-menu" class="screen">
+    <h1>DFJK 打歌台</h1>
+    <p class="sub" id="chart-status">谱面加载中…</p>
+    <div class="menu-buttons">
+      <button id="btn-start" class="primary" disabled>开始游戏</button>
+      <button id="btn-calib">输入校准</button>
+      <button id="btn-board">排行榜</button>
+    </div>
+    <p class="hint" id="calib-status"></p>
+    <p class="hint">按键：D F J K ｜ 暂停：Esc</p>
+  </section>
+
+  <!-- 校准 -->
+  <section id="screen-calib" class="screen hidden">
+    <h2>输入校准</h2>
+    <p class="sub">听 4 声预备拍后，跟着后面 4 拍，每拍按任意一个键（D/F/J/K/空格）</p>
+    <div id="calib-pulse"></div>
+    <p id="calib-progress" class="sub"></p>
+    <p id="calib-result" class="result-line"></p>
+    <div class="menu-buttons">
+      <button id="btn-calib-run" class="primary">开始校准</button>
+      <button id="btn-calib-clear">清除校准</button>
+      <button id="btn-calib-back">返回</button>
+    </div>
+  </section>
+
+  <!-- 游戏 -->
+  <section id="screen-game" class="screen hidden">
+    <canvas id="game-canvas"></canvas>
+    <div id="pause-overlay" class="hidden">
+      <p>已暂停</p>
+      <p class="hint">按 Esc 继续</p>
+    </div>
+    <button id="btn-fullscreen" title="全屏">⛶</button>
+  </section>
+
+  <!-- 成绩 -->
+  <section id="screen-result" class="screen hidden">
+    <h2>成绩</h2>
+    <p id="result-rank" class="rank"></p>
+    <p id="result-score" class="score-line"></p>
+    <table class="stats" id="result-table"></table>
+    <p id="result-calib" class="hint"></p>
+    <p id="result-uncalibrated" class="hint"></p>
+    <div class="save-row">
+      <input id="input-name" maxlength="12" placeholder="留个名字">
+      <button id="btn-save-score" class="primary">存成绩</button>
+    </div>
+    <p id="save-status" class="hint"></p>
+    <div class="menu-buttons">
+      <button id="btn-retry">再来一把</button>
+      <button id="btn-result-board">排行榜</button>
+      <button id="btn-result-menu">回菜单</button>
+    </div>
+  </section>
+
+  <!-- 排行榜 -->
+  <section id="screen-board" class="screen hidden">
+    <h2>排行榜</h2>
+    <table class="stats" id="board-table"></table>
+    <div class="io-row">
+      <div>
+        <p class="hint">导出（复制发群里）</p>
+        <textarea id="board-export" readonly rows="5"></textarea>
+      </div>
+      <div>
+        <p class="hint">导入（把别人的 JSON 贴进来）</p>
+        <textarea id="board-import" rows="5"></textarea>
+        <button id="btn-merge">合并进榜单</button>
+        <p id="merge-status" class="hint"></p>
+      </div>
+    </div>
+    <div class="menu-buttons">
+      <button id="btn-board-back">返回</button>
+    </div>
+  </section>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
