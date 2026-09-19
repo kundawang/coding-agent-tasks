@@ -1,0 +1,14 @@
+{
+  "tick_minutes": 60,
+  "goal_days": 30,
+  "systems": {
+    "solar":      {"name": "太阳能板", "build_cost": 120, "power": 8, "note": "白天满发，夜晚 0"},
+    "battery":    {"name": "蓄电池",   "build_cost": 90,  "capacity": 60},
+    "oxygen":     {"name": "制氧机",   "build_cost": 150, "power_use": 6, "o2_per_hour": 12, "needs_water": 1},
+    "recycler":   {"name": "水循环",   "build_cost": 110, "power_use": 3, "water_recovery": 0.7},
+    "greenhouse": {"name": "温室",     "build_cost": 140, "power_use": 5, "food_per_day": 6, "needs_water": 4},
+    "airlock":    {"name": "气闸",     "build_cost": 80,  "power_use": 1, "note": "没有气闸不能出舱维修"}
+  },
+  "storage": {"power": 60, "water": 40, "o2": 60, "food": 60},
+  "start": {"power": 40, "water": 30, "o2": 50, "food": 40}
+}

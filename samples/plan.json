@@ -1,0 +1,16 @@
+{
+  "seed": 20260919,
+  "note": "同 seed + 同一份计划，模拟结果必须完全一致",
+  "builds": [
+    {"day": 1, "system": "battery"},
+    {"day": 2, "system": "oxygen"},
+    {"day": 5, "system": "recycler"},
+    {"day": 9, "system": "greenhouse"}
+  ],
+  "shifts": [
+    {"day": 1, "crew": "c1", "task": "repair", "hours": [9, 10, 11, 12]},
+    {"day": 1, "crew": "c2", "task": "rest",   "hours": [0, 1, 2, 3, 4, 5, 6, 7]},
+    {"day": 1, "crew": "c3", "task": "farm",   "hours": [8, 9, 10, 11]},
+    {"day": 1, "crew": "c4", "task": "rest",   "hours": [12, 13, 14, 15, 16, 17]}
+  ]
+}

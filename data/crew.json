@@ -1,0 +1,15 @@
+{
+  "crew": [
+    {"id": "c1", "name": "阿澈", "role": "engineer", "skill": 4},
+    {"id": "c2", "name": "小满", "role": "doctor",   "skill": 3},
+    {"id": "c3", "name": "洛宁", "role": "botanist", "skill": 3},
+    {"id": "c4", "name": "砚秋", "role": "engineer", "skill": 2}
+  ],
+  "roles": {
+    "engineer": {"name": "工程师", "repair_bonus": 0.35, "fix_per_hour": 2},
+    "doctor":   {"name": "医生",   "heal_per_hour": 1.5},
+    "botanist": {"name": "农艺师", "grow_bonus": 0.4}
+  },
+  "needs": {"o2_per_person_hour": 1.2, "water_per_person_day": 3, "food_per_person_day": 2},
+  "fatigue": {"work_per_hour": 4, "rest_per_hour": -6, "max": 100, "tired_penalty_above": 70}
+}
