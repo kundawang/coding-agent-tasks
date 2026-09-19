@@ -1,0 +1,46 @@
+{
+  "id": "chapter-01",
+  "version": 1,
+  "start": "gate",
+  "vars": { "hasKey": false, "trust": 0, "visitedCave": false },
+  "scenes": {
+    "gate": {
+      "text": "雨还在下。铁门锁着，门后的灯忽明忽暗。你摸了摸口袋。",
+      "choices": [
+        { "text": "掏出钥匙", "if": { "var": "hasKey", "eq": true }, "go": "open" },
+        { "text": "翻墙进去", "go": "wall", "set": { "trust": -1 } },
+        { "text": "先回山洞看看", "if": { "var": "visitedCave", "eq": false }, "go": "cave" },
+        { "text": "算了，回去", "go": "leave", "end": true }
+      ]
+    },
+    "cave": {
+      "text": "山洞里比外面还冷。石台上放着一把铜钥匙，旁边压着半张纸条。",
+      "choices": [
+        { "text": "拿走钥匙", "go": "gate", "set": { "hasKey": true, "visitedCave": true } },
+        { "text": "只看纸条", "go": "note", "set": { "visitedCave": true } }
+      ]
+    },
+    "note": {
+      "text": "纸条上写着：「别开那扇门。」字迹被雨洇开了一半。",
+      "choices": [
+        { "text": "回门口", "go": "gate" }
+      ]
+    },
+    "wall": {
+      "text": "你翻了过去，裤腿挂破一道口子。门里的灯突然灭了。",
+      "choices": [
+        { "text": "往里走", "go": "open", "end": true }
+      ]
+    },
+    "open": {
+      "text": "门开了。里面比你想象的安静得多。",
+      "choices": [
+        { "text": "进去", "go": "leave", "end": true }
+      ]
+    },
+    "leave": {
+      "text": "你转身往回走。雨点打在伞面上，声音很闷。",
+      "choices": []
+    }
+  }
+}
