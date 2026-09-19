@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tickwars — 本地双人抢点</title>
+<style>
+  :root {
+    --bg: #0b0f16;
+    --panel: #141b26;
+    --line: #26313f;
+    --text: #d7e3f4;
+    --muted: #8494a8;
+    --p1: #e74c3c;
+    --p2: #3498db;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+  }
+  .wrap { width: 960px; max-width: 100%; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 12px; font-size: 13px; }
+  .hud {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px 10px 0 0;
+    padding: 8px 14px;
+  }
+  .score { font: bold 18px ui-monospace, Consolas, monospace; min-width: 92px; }
+  .score.p1 { color: var(--p1); text-align: left; }
+  .score.p2 { color: var(--p2); text-align: right; }
+  #timer {
+    font: bold 20px ui-monospace, Consolas, monospace;
+    flex: 1; text-align: center; letter-spacing: 1px;
+  }
+  #status { color: var(--muted); font-size: 12px; min-width: 120px; text-align: center; }
+  .stage {
+    position: relative;
+    width: 960px;
+    height: 640px;
+    max-width: 100%;
+    border: 1px solid var(--line);
+    border-top: none;
+    background: #000;
+  }
+  canvas { display: block; width: 100%; height: auto; }
+  .overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px;
+    background: rgba(8, 12, 18, 0.78);
+    text-align: center;
+    padding: 24px;
+  }
+  .overlay.hidden { display: none; }
+  .overlay h2 { margin: 0; font-size: 28px; }
+  .overlay p { margin: 0; color: var(--muted); max-width: 560px; }
+  .controls {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    justify-content: center; margin-top: 6px;
+  }
+  button {
+    background: #1d2838;
+    color: var(--text);
+    border: 1px solid #33425a;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:hover { background: #28364a; }
+  button.primary { background: #2563eb; border-color: #3b82f6; }
+  button.primary:hover { background: #1d4ed8; }
+  button:disabled { opacity: 0.45; cursor: default; }
+  .specbar {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 10px 14px;
+  }
+  .specbar.on { display: flex; }
+  #seek { flex: 1; accent-color: #60a5fa; }
+  #ticklabel { font: 12px ui-monospace, Consolas, monospace; color: var(--muted); min-width: 130px; text-align: right; }
+  .toolbar {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-top: 12px; align-items: center;
+  }
+  #verify { font-size: 12px; color: var(--muted); }
+ #verify.ok { color: #4ade80; }
+  #verify.bad { color: #f87171; }
+  textarea {
+    width: 100%; height: 150px;
+    margin-top: 10px;
+    background: #0d131c; color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px; font: 12px ui-monospace, Consolas, monospace;
+    resize: vertical;
+  }
+  .hidden { display: none !important; }
+  .keys b { color: #f2f6fc; }
+  .keys .k {
+    display: inline-block; border: 1px solid #33425a; border-radius: 5px;
+    padding: 0 7px; margin: 0 2px; font: 12px ui-monospace, Consolas, monospace;
+    background: #1d2838;
+  }
+  select {
+    background: #1d2838; color: var(--text);
+    border: 1px solid #33425a; border-radius: 6px; padding: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>tickwars</h1>
+  <p class="sub keys">本地双人抢点 · 固定 60 tick/秒逻辑 ·
+    <b>玩家一</b> <span class="k">W</span><span class="k">A</span><span class="k">S</span><span class="k">D</span> ·
+    <b>玩家二</b> 方向键 ·
+    <span class="k">P</span> 暂停 ·
+    <b>规则</b>：身体接触即搏命，双方都不无敌就双杀，一方无敌则无敌方淘汰对方；复活后短暂无敌可穿过围堵。
+  </p>
+
+  <div class="hud">
+    <div class="score p1" id="score0">P1&nbsp;0</div>
+    <div id="status">未开始</div>
+    <div id="timer">3:00.0</div>
+    <div class="score p2" id="score1">0&nbsp;P2</div>
+  </div>
+
+  <div class="stage">
+    <canvas id="game" width="960" height="640"></canvas>
+    <div class="overlay" id="overlay">
+      <h2 id="ovTitle">tickwars</h2>
+      <p id="ovBody">两人共用一个键盘抢三个据点。占点要连续站 2.5 秒，占着的据点每秒加分，三分钟结算。</p>
+      <div class="controls">
+        <button class="primary" id="btnStart">开始对战</button>
+        <button id="btnSpecOverlay" class="hidden">观战这局</button>
+        <button id="btnExportOverlay" class="hidden">导出本局回放</button>
+        <button id="btnImport">导入回放观战</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="specbar" id="specbar">
+    <button id="btnPlay">▶</button>
+    <label>速度
+      <select id="speed">
+        <option value="0.25">0.25×</option>
+        <option value="0.5">0.5×</option>
+        <option value="1" selected>1×</option>
+        <option value="2">2×</option>
+        <option value="4">4×</option>
+      </select>
+    </label>
+    <input type="range" id="seek" min="0" max="1" step="1" value="0">
+    <span id="ticklabel">0 / 0</span>
+    <button id="btnExitSpec">退出观战</button>
+  </div>
+
+  <div class="toolbar">
+    <button id="btnPause" class="hidden">暂停 (P)</button>
+    <button id="btnResume" class="hidden">继续 (P)</button>
+    <button id="btnExport" class="hidden" disabled>导出本局回放</button>
+    <button id="btnSpec" class="hidden" disabled>观战（回放这局）</button>
+    <span id="verify"></span>
+  </div>
+
+  <div id="importBox" class="hidden">
+    <p class="sub">把别人导出的回放 JSON 整个贴进来：</p>
+    <textarea id="replayText" placeholder='{"format":"tickwars-replay", ...}'></textarea>
+    <div class="toolbar">
+      <button class="primary" id="btnLoadReplay">播放</button>
+      <button id="btnCancelImport">取消</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
