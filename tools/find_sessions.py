@@ -11,6 +11,8 @@
 import datetime as dt
 import json
 import os
+import re
+import subprocess
 import sys
 
 HOME = os.path.expanduser("~")
@@ -50,6 +52,42 @@ def prompt_head(path, chars=60):
     return ""
 
 
+def start_time(name):
+    """从文件名 rollout-2026-09-18T20-40-35-<uuid>.jsonl 里取会话开始时间。"""
+    match = re.search(r"rollout-(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})", name)
+    if not match:
+        return None
+    date, hour, minute, second = match.groups()
+    try:
+        return dt.datetime.fromisoformat(f"{date}T{hour}:{minute}:{second}")
+    except ValueError:
+        return None
+
+
+def running_process_starts():
+    """拿还在运行的 codex / claude 进程的启动时间，用来判断哪些会话的窗口还开着。"""
+    script = (
+        "Get-CimInstance Win32_Process | "
+        "Where-Object { $_.Name -match 'codex|claude' } | "
+        "ForEach-Object { '{0:yyyy-MM-ddTHH:mm:ss}' -f $_.CreationDate }"
+    )
+    try:
+        proc = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", script],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=25,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return []
+    times = []
+    for line in (proc.stdout or "").splitlines():
+        line = line.strip()
+        try:
+            times.append(dt.datetime.fromisoformat(line))
+        except ValueError:
+            continue
+    return times
+
+
 def collect():
     rows = []
     for label, root in ROOTS:
@@ -68,6 +106,7 @@ def collect():
                     pass
                 rows.append({
                     "when": os.path.getmtime(path),
+                    "started": start_time(name),
                     "label": label,
                     "session": meta.get("session_id") or name,
                     "cli": meta.get("cli_version") or "",
@@ -79,12 +118,28 @@ def collect():
     return rows
 
 
-def main(limit=12):
+def main(limit=6, since_minutes=None):
     rows = collect()
-    print(f"最近 {min(limit, len(rows))} 个会话（按时间倒序）\n")
-    for row in rows[:limit]:
-        when = dt.datetime.fromtimestamp(row["when"]).strftime("%m-%d %H:%M")
-        print(f"[{when}] {row['session']}")
+    now = dt.datetime.now()
+    if since_minutes:
+        rows = [r for r in rows if (now - dt.datetime.fromtimestamp(r["when"])).total_seconds() <= since_minutes * 60]
+
+    procs = running_process_starts()
+    rows = rows[:limit]
+    live = [r for r in rows if (now - dt.datetime.fromtimestamp(r["when"])).total_seconds() <= 15 * 60]
+    print(f"本机累计 {len(collect())} 个会话；现在还在跑的 codex/claude 进程 {len(procs)} 个")
+    print("下面列最近的 %d 条：\n" % len(rows))
+
+    for row in rows:
+        last = dt.datetime.fromtimestamp(row["when"]).strftime("%m-%d %H:%M")
+        begin = row["started"].strftime("%m-%d %H:%M:%S") if row["started"] else "(未知)"
+        open_now = False
+        if row["started"]:
+            open_now = any(abs((row["started"] - t).total_seconds()) <= 15 for t in procs)
+        tag = "[窗口还开着]" if open_now else "[已结束]"
+        extra = "  刚刚还在写" if (now - dt.datetime.fromtimestamp(row["when"])).total_seconds() <= 15 * 60 else ""
+        print(f"{tag} 开始 {begin}  最后写入 {last}{extra}")
+        print(f"    SessionID: {row['session']}")
         print(f"    跑的目录 : {row['cwd'] or '(未知)'}")
         if row["cli"]:
             print(f"    客户端   : {row['label']} cli={row['cli']}")
@@ -92,8 +147,12 @@ def main(limit=12):
             print(f"    prompt   : {row['prompt']}")
         print(f"    轨迹文件 : {row['file']}")
         print()
-    print("SessionID 就是上面第一行的 UUID。发给助手时写成：题号 + 轮次 + SessionID（例如 T007 B 01a0b488-...）。")
+    print("[窗口还开着] = 还有对应的 codex/claude 进程在跑（可能是空闲挂着）。")
+    print("SessionID 就是上面那一行的 UUID。发给助手时写成：题号 + 轮次 + SessionID（例如 T007 B 01a0b488-...）。")
+    print("只看最近 30 分钟：把参数写成  30 30   （第一个是条数，第二个是分钟数）")
 
 
 if __name__ == "__main__":
-    main(int(sys.argv[1]) if len(sys.argv) > 1 else 12)
+    limit = int(sys.argv[1]) if len(sys.argv) > 1 else 6
+    since = int(sys.argv[2]) if len(sys.argv) > 2 else None
+    main(limit, since)
