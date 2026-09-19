@@ -57,6 +57,10 @@ def lark(args, expect_ok=True):
     proc = subprocess.run([lark_bin(), *args], capture_output=True, text=True,
                           encoding="utf-8", errors="replace")
     raw = (proc.stdout or "").strip()
+    # 有些子命令（上传附件之类）会先在 stdout 打一行 warning，再把 JSON 跟在后面
+    brace = raw.find("{")
+    if brace > 0:
+        raw = raw[brace:]
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
@@ -171,7 +175,8 @@ def build_fields(meta, task_id, args):
     fields = {
         "User Prompt": read_prompt(meta, task_id) or None,
         "任务类型": sel(norm_task_type(meta.get("task_type"))),
-        "任务难度": sel(meta.get("difficulty")),
+        # 注意：这张表里「任务难度」是文本字段（不是下拉），要写字符串
+        "任务难度": meta.get("difficulty") or None,
         "语言/框架": meta.get("language_framework") or None,
         "Harness": sel(meta.get("harness")),
         "Harness 版本": meta.get("harness_version") or None,
@@ -464,14 +469,37 @@ def main():
 
     fields = {key: flatten(value) for key, value in fields.items()}
     payload = json.dumps(fields, ensure_ascii=False)
-    lark([
-        "base", "+record-upsert",
-        "--base-token", cfg["base_token"],
-        "--table-id", cfg["table_id"],
-        "--record-id", record_id,
-        "--json", payload,
-    ])
-    print(f"字段已写入 {record_id}")
+    try:
+        lark([
+            "base", "+record-upsert",
+            "--base-token", cfg["base_token"],
+            "--table-id", cfg["table_id"],
+            "--record-id", record_id,
+            "--json", payload,
+        ])
+        print(f"字段已写入 {record_id}")
+    except SystemExit as exc:
+        # 有的表里会有带扩展的字段（比如「任务难度」挂了 LLM 扩展）整批写会被拒，
+        # 这时候改成逐字段写，能写的都写进去，写不了的单独列出来让人手填
+        print(f"整批写入被拒，改成逐字段写：{str(exc).splitlines()[0]}")
+        failed = []
+        for key, value in fields.items():
+            try:
+                lark([
+                    "base", "+record-upsert",
+                    "--base-token", cfg["base_token"],
+                    "--table-id", cfg["table_id"],
+                    "--record-id", record_id,
+                    "--json", json.dumps({key: value}, ensure_ascii=False),
+                ])
+            except SystemExit as one:
+                failed.append((key, str(one).splitlines()[0]))
+        if failed:
+            print("下面这些字段接口写不进去，需要你自己在表里填：")
+            for key, msg in failed:
+                print(f"  - {key}  （{msg}）")
+        else:
+            print("已逐字段写完全部字段。")
 
     for field_name, paths in attach.items():
         # lark-cli 只收「当前目录下的相对路径」，这里统一转一下
