@@ -1,0 +1,14 @@
+{
+  "seed": 20260919,
+  "track": "oval",
+  "car": "hatch",
+  "note": "每 4 个 tick 记一条输入，tick 从 0 开始；重放这一串输入要能跑出完全一样的一圈",
+  "inputs": [
+    {"tick": 0,   "throttle": 1, "steer": 0},
+    {"tick": 4,   "throttle": 1, "steer": 0},
+    {"tick": 8,   "throttle": 0, "steer": 1},
+    {"tick": 12,  "throttle": 1, "steer": 0},
+    {"tick": 16,  "throttle": 0, "steer": -1},
+    {"tick": 20,  "throttle": 1, "steer": 0}
+  ]
+}

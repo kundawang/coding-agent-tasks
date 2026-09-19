@@ -1,0 +1,10 @@
+{
+  "tick_rate": 60,
+  "cars": {
+    "hatch":   {"name": "小钢炮", "accel": 260, "brake": 420, "max_speed": 320, "turn_rate": 165, "grip": 0.86, "drift_grip": 0.55},
+    "coupe":   {"name": "双门跑", "accel": 300, "brake": 380, "max_speed": 380, "turn_rate": 140, "grip": 0.80, "drift_grip": 0.45},
+    "truck":   {"name": "小货车", "accel": 180, "brake": 500, "max_speed": 250, "turn_rate": 120, "grip": 0.92, "drift_grip": 0.70}
+  },
+  "off_track_penalty": 0.55,
+  "wall_bounce": 0.35
+}
