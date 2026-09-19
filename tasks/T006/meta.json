@@ -6,7 +6,7 @@
   "difficulty": "困难",
   "language_framework": "JavaScript, Canvas, Web Audio（原生 ES module，无构建）",
   "harness": "Codex CLI",
-  "harness_version": "0.155.0",
+  "harness_version": "0.153.4",
   "os": "Windows",
   "env_level": "无外部依赖",
   "prompt_file": "prompt.md",
@@ -37,5 +37,5 @@
   },
   "notes": "",
   "remark": "注意：这一对是 2026-09-18 20:39 在共享目录 Documents\\Codex-CLI 里跑的，不是 t006/base 铺出来的干净工作区；当时题目要求的 samples/chart.json 还没放进去，两轮都发现谱面缺失、各自生成了占位谱面。产物快照按『初始环境快照 + 模型产出的子目录』整理：A 用 rhythm-game/，B 用 rhythm/。旧的一对产物快照已备份到 t006/a-old、t006/b-old。",
-  "updated_at": "2026-09-19T10:43:26"
+  "updated_at": "2026-09-19T10:43:50"
 }
