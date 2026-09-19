@@ -1,0 +1,17 @@
+{
+  "goods": {
+    "grain":  {"name": "粮食", "weight": 1,  "base": 12,  "volatility": 0.10},
+    "salt":   {"name": "盐",   "weight": 2,  "base": 30,  "volatility": 0.18},
+    "silk":   {"name": "绸缎", "weight": 1,  "base": 75,  "volatility": 0.25},
+    "iron":   {"name": "铁锭", "weight": 3,  "base": 55,  "volatility": 0.20},
+    "tea":    {"name": "茶砖", "weight": 2,  "base": 48,  "volatility": 0.15},
+    "herbs":  {"name": "药材", "weight": 1,  "base": 90,  "volatility": 0.30}
+  },
+  "city_modifiers": {
+    "lingang": {"grain": 0.8, "salt": 1.35, "silk": 0.9,  "iron": 1.05, "tea": 1.1,  "herbs": 1.2},
+    "yuncun":  {"grain": 0.7, "salt": 1.1,  "silk": 1.45, "iron": 1.2,  "tea": 0.85, "herbs": 1.0},
+    "heishan": {"grain": 1.3, "salt": 0.85, "silk": 1.1,  "iron": 0.7,  "tea": 1.15, "herbs": 1.35},
+    "baishui": {"grain": 1.1, "salt": 1.2,  "silk": 0.8,  "iron": 1.35, "tea": 0.75, "herbs": 1.15},
+    "nanqiu":  {"grain": 1.25,"salt": 0.9,  "silk": 1.2,  "iron": 1.15, "tea": 1.3,  "herbs": 0.8}
+  }
+}

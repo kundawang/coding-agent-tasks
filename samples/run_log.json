@@ -1,0 +1,12 @@
+{
+  "seed": 20260919,
+  "note": "同 seed + 同一串操作，价格、事件、结算必须完全一致",
+  "capacity": 40,
+  "start_gold": 500,
+  "actions": [
+    {"day": 1, "op": "buy",  "city": "lingang", "good": "grain", "qty": 20},
+    {"day": 1, "op": "travel", "from": "lingang", "to": "heishan"},
+    {"day": 4, "op": "sell", "city": "heishan", "good": "grain", "qty": 20},
+    {"day": 4, "op": "buy",  "city": "heishan", "good": "iron", "qty": 6}
+  ]
+}
