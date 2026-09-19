@@ -97,6 +97,13 @@ def load_meta(task_id):
         return json.load(fh)
 
 
+def save_meta(task_id, meta):
+    path = os.path.join(task_dir(task_id), "meta.json")
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(meta, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+
+
 def read_prompt(meta, task_id):
     name = meta.get("prompt_file") or "prompt.md"
     path = os.path.join(task_dir(task_id), name)
@@ -519,6 +526,15 @@ def main():
 
     print("\n字段写完了。")
     print("「提交」是按钮字段，接口不能代点 —— 请到表里确认内容后自己点「提交」。")
+
+    # 记一笔"这题已经回填到哪一行了"，免得定时任务或下次再跑时重复填
+    meta["submit"] = {
+        "uid": (args.uid or ""),
+        "record_id": record_id,
+        "at": __import__("datetime").datetime.now().isoformat(timespec="seconds"),
+    }
+    save_meta(task_id, meta)
+    print(f"台账已记：{task_id} -> UID {args.uid or '?'} ({record_id})")
     return 0
 
 
