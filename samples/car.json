@@ -1,0 +1,9 @@
+{
+  "accel": 380,
+  "brake": 620,
+  "maxSpeed": 520,
+  "turnRateDeg": 170,
+  "driftTurnRateDeg": 260,
+  "offRoadSpeedFactor": 0.45,
+  "fuelPerSecond": 3.5
+}
