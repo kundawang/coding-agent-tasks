@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>街角小店 · 摸鱼经营</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>街角小店</h1>
+      <div class="hud">
+        <div class="hud-item">
+          <span class="hud-label">现金</span>
+          <strong id="hud-cash">¥0.00</strong>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">第</span>
+          <strong id="hud-day">1</strong>
+          <span class="hud-label">天</span>
+        </div>
+        <div class="hud-item hud-clock">
+          <div class="clock-line">
+            <span class="hud-label">今日进度</span>
+            <span id="hud-clock-text">0%</span>
+          </div>
+          <div class="clock-bar"><div id="hud-clock-fill"></div></div>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">货架</span>
+          <strong id="hud-slots">0/0</strong>
+        </div>
+        <button id="btn-reset" class="btn btn-ghost" title="清空存档，重新开店">重开</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel panel-goods">
+        <h2>进货 &amp; 定价</h2>
+        <p class="hint">售价用元填写（精确到分）。定太高顾客扭头就走，定太低走量不赚钱。</p>
+        <div id="goods-list" class="goods-grid"></div>
+      </section>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>今天</h2>
+          <div id="today-stats" class="stat-list"></div>
+        </section>
+
+        <section class="panel">
+          <h2>库存批次</h2>
+          <p class="hint">先进的先卖；红色 = 今天开门已过期，会被扔掉。</p>
+          <div id="stock-list"></div>
+        </section>
+
+        <section class="panel">
+          <h2>每日结算</h2>
+          <div id="history-list" class="record-list"></div>
+        </section>
+
+        <section class="panel panel-anomaly">
+          <h2>异常记录 <span id="anomaly-count" class="badge"></span></h2>
+          <p class="hint">离线封顶、系统时间回拨、存档修复都会记在这里。</p>
+          <div id="anomaly-list" class="record-list"></div>
+        </section>
+      </aside>
+    </main>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <div id="modal" class="modal" hidden>
+      <div class="modal-card">
+        <h2 id="modal-title">欢迎回来</h2>
+        <div id="modal-body"></div>
+        <div class="modal-actions">
+          <button id="modal-ok" class="btn">知道了</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
