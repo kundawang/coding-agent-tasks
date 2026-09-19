@@ -1,0 +1,11 @@
+{
+  "resources": {"ore": {"name": "矿石"}, "ingot": {"name": "锭"}, "gear": {"name": "齿轮"}},
+  "buildings": {
+    "mine":    {"name": "矿场", "cost": {"ore": 0},                          "output": {"ore": 0.5},   "unlock": {}},
+    "smelter": {"name": "熔炉", "cost": {"ore": 50},                         "input": {"ore": 1},      "output": {"ingot": 0.35}, "unlock": {"ore": 50}},
+    "forge":   {"name": "锻造", "cost": {"ingot": 80, "ore": 200},           "input": {"ingot": 1},    "output": {"gear": 0.2},   "unlock": {"ingot": 60}},
+    "market":  {"name": "市场", "cost": {"gear": 20},                        "output": {"ore": 12},    "unlock": {"gear": 5}, "note": "齿轮换矿"}
+  },
+  "cost_growth": 1.15,
+  "tick_rate": 10
+}

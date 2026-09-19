@@ -1,0 +1,9 @@
+{
+  "version": 3,
+  "note": "存档样例；离线结算用 last_seen 时间戳，旧版本存档（version<3）要能迁移",
+  "last_seen": 1789900000,
+  "resources": {"ore": 1250, "ingot": 310, "gear": 42},
+  "buildings": {"mine": 12, "smelter": 6, "forge": 3},
+  "upgrades": ["pickaxe", "bellows"],
+  "medals": 0
+}

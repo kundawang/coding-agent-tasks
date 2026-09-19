@@ -1,0 +1,9 @@
+{
+  "upgrades": {
+    "pickaxe":  {"name": "硬质镐", "cost": {"ore": 200}, "affects": "mine",    "multiplier": 1.5, "requires": []},
+    "bellows":  {"name": "风箱",   "cost": {"ingot": 40}, "affects": "smelter", "multiplier": 1.6, "requires": ["pickaxe"]},
+    "press":    {"name": "冲压机", "cost": {"ingot": 120},"affects": "forge",   "multiplier": 1.8, "requires": ["bellows"]},
+    "offline":  {"name": "值班表", "cost": {"gear": 10},  "affects": "offline", "multiplier": 1.35, "requires": ["press"], "note": "离线收益倍率"}
+  },
+  "prestige": {"name": "重建", "unlock_at": {"gear": 1000}, "gain": "每 1000 齿轮换 1 枚徽章，徽章给全局 +10%"}
+}
