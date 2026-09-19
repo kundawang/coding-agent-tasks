@@ -161,7 +161,8 @@ def survey():
                 entry["settled"] = (now - dt.datetime.fromtimestamp(sess["mtime"])).total_seconds() >= SETTLE_SECONDS
                 entry["recorded"] = (meta["runs"][side].get("session_id") == sess["session"])
                 entry["lines"] = sum(1 for _ in open(sess["path"], encoding="utf-8", errors="replace"))
-                if entry["lines"] < SUSPECT_LINES:
+                # 只有"窗口已经关了但轨迹还是很短"才算疑似中断；窗口还开着只是还在跑
+                if entry["lines"] < SUSPECT_LINES and entry["closed"]:
                     suspect.append(f"{side} 只有 {entry['lines']} 行")
             info["sides"][side] = entry
             if not (entry["session"] and entry["closed"] and entry["settled"]):
