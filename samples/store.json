@@ -1,0 +1,12 @@
+{
+  "cashCents": 500000,
+  "shelfSlots": 24,
+  "dayLengthMs": 240000,
+  "customersPerDay": 120,
+  "stock": [
+    { "goodsId": "milk", "qty": 6, "boughtOnDay": 1 },
+    { "goodsId": "instant_noodle", "qty": 4, "boughtOnDay": 1 },
+    { "goodsId": "cola", "qty": 6, "boughtOnDay": 1 }
+  ],
+  "prices": { "milk": 450, "instant_noodle": 400, "cola": 350 }
+}

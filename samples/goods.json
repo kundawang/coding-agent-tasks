@@ -1,0 +1,12 @@
+{
+  "goods": [
+    { "id": "milk", "name": "鲜牛奶", "costCents": 320, "shelfLifeDays": 7, "popularity": 0.8, "slotSize": 1 },
+    { "id": "bread", "name": "吐司面包", "costCents": 480, "shelfLifeDays": 4, "popularity": 0.7, "slotSize": 1 },
+    { "id": "egg", "name": "鸡蛋一盒", "costCents": 890, "shelfLifeDays": 21, "popularity": 0.6, "slotSize": 2 },
+    { "id": "instant_noodle", "name": "泡面", "costCents": 260, "shelfLifeDays": 180, "popularity": 0.9, "slotSize": 2 },
+    { "id": "cola", "name": "可乐", "costCents": 210, "shelfLifeDays": 300, "popularity": 0.95, "slotSize": 2 },
+    { "id": "snack", "name": "薯片", "costCents": 350, "shelfLifeDays": 120, "popularity": 0.65, "slotSize": 1 },
+    { "id": "umbrella", "name": "折叠伞", "costCents": 1800, "shelfLifeDays": 9999, "popularity": 0.15, "slotSize": 1 },
+    { "id": "battery", "name": "五号电池", "costCents": 400, "shelfLifeDays": 3650, "popularity": 0.25, "slotSize": 1 }
+  ]
+}
