@@ -6,7 +6,7 @@
   "difficulty": "困难",
   "language_framework": "JavaScript, HTML, CSS（原生 ES module，无构建）",
   "harness": "Codex CLI",
-  "harness_version": "",
+  "harness_version": "0.153.4",
   "os": "Windows",
   "env_level": "无外部依赖",
   "prompt_file": "prompt.md",
@@ -33,5 +33,7 @@
       "product_snapshot_permalink": ""
     }
   },
-  "notes": ""
+  "notes": "",
+  "remark": "A/B 待补：这台机器上 T007 只剩 3 条 CLI 会话（19:50、20:40:12、20:40:35），19:13 那两条已不在；且它们都写在同一个 Documents\\Codex-CLI\\embervault 目录里，产物相互覆盖、无法区分 A/B。所以 A/B-SessionID、A/B-产物快照、A/B-轨迹文件 暂空，建议重跑一轮。",
+  "updated_at": "2026-09-19T10:53:03"
 }
