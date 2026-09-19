@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>午休打歌赛 · 四轨音游</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <main id="app">
+      <!-- 主菜单 -->
+      <section class="screen" id="screen-menu">
+        <div class="panel">
+          <h1>午休打歌赛</h1>
+          <p class="sub">D F J K 四轨 · WebAudio 8-bit 现场合成 · 纯静态</p>
+
+          <div class="song-meta">
+            <div id="song-title">加载谱面中…</div>
+            <div id="song-info" class="dim"></div>
+          </div>
+
+          <div class="calib-line">
+            当前校准：<span id="calib-state" class="badge warn">未校准（按 0ms 判定）</span>
+          </div>
+
+          <div class="buttons">
+            <button class="primary" id="btn-start">开始演奏</button>
+            <button id="btn-calibrate">键盘/屏幕校准</button>
+            <button id="btn-fullscreen">全屏</button>
+          </div>
+          <p class="hint">Enter 开始 · C 校准 · Esc 游戏中暂停</p>
+
+          <h2>排行榜（本机）</h2>
+          <div class="board-wrap">
+            <table id="leaderboard">
+              <thead>
+                <tr><th>#</th><th>名字</th><th>分数</th><th>准确率</th><th>最大连击</th><th>校准</th><th>时间</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="buttons small">
+            <button id="btn-export">导出成绩 JSON</button>
+            <button id="btn-import">合并成绩 JSON</button>
+            <button id="btn-clear-scores" class="danger">清空榜单</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 游戏 -->
+      <section class="screen hidden" id="screen-game">
+        <canvas id="game-canvas"></canvas>
+        <div class="overlay hidden" id="pause-overlay">
+          <div class="panel overlay-panel">
+            <h2>已暂停</h2>
+            <p class="dim">音乐与音符都停在暂停瞬间，暂停时间不计入判定。</p>
+            <div class="buttons">
+              <button class="primary" id="btn-resume">继续（Esc）</button>
+              <button id="btn-quit">放弃本局</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 校准 -->
+      <section class="screen hidden" id="screen-calibrate">
+        <canvas id="calib-canvas"></canvas>
+        <div class="overlay hidden" id="calib-result">
+          <div class="panel overlay-panel">
+            <h2>校准结果</h2>
+            <p>本机偏移：<strong id="calib-offset">0</strong> ms</p>
+            <p class="dim">四下偏差：<span id="calib-taps"></span><br />平均绝对偏差：<span id="calib-mean"></span> ms</p>
+            <p class="dim" id="calib-tip"></p>
+            <div class="buttons">
+              <button class="primary" id="btn-calib-save">保存并记住</button>
+              <button id="btn-calib-redo">重新校准</button>
+              <button id="btn-calib-back">返回（不保存）</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 结算 -->
+      <section class="screen hidden" id="screen-result">
+        <div class="panel wide">
+          <h2 id="result-rank-line">演奏结束</h2>
+          <div class="result-grid">
+            <div class="stat"><span class="num perfect" id="r-perfect">0</span><span>Perfect</span></div>
+            <div class="stat"><span class="num great" id="r-great">0</span><span>Great</span></div>
+            <div class="stat"><span class="num good" id="r-good">0</span><span>Good</span></div>
+            <div class="stat"><span class="num miss" id="r-miss">0</span><span>Miss</span></div>
+            <div class="stat"><span class="num" id="r-combo">0</span><span>最大连击</span></div>
+            <div class="stat"><span class="num" id="r-acc">0%</span><span>准确率</span></div>
+            <div class="stat big"><span class="num" id="r-score">0</span><span>总分</span></div>
+            <div class="stat" id="r-rank-wrap"><span class="num rank" id="r-rank">-</span><span>评级</span></div>
+          </div>
+
+          <div class="save-row">
+            <label>
+              输入名字上榜：
+              <input id="player-name" maxlength="12" placeholder="同事的名字" />
+            </label>
+            <button class="primary" id="btn-save-score">保存成绩</button>
+            <span id="save-hint" class="dim"></span>
+          </div>
+
+          <div class="buttons">
+            <button class="primary" id="btn-retry">再来一局</button>
+            <button id="btn-back-menu">返回菜单</button>
+          </div>
+        </div>
+      </section>
+
+      <textarea id="io-textarea" class="hidden" spellcheck="false"></textarea>
+    </main>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
