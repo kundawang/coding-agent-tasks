@@ -1,0 +1,12 @@
+{
+  "fps": 60,
+  "moves": [
+    { "id": "light_punch", "name": "轻拳", "input": "5L", "startup": 3, "active": 2, "recovery": 7, "damage": 5, "hitstun": 12, "blockstun": 8, "cancelInto": ["light_punch", "light_kick", "heavy_punch"] },
+    { "id": "light_kick", "name": "轻腿", "input": "5M", "startup": 5, "active": 2, "recovery": 9, "damage": 7, "hitstun": 13, "blockstun": 9, "cancelInto": ["heavy_punch"] },
+    { "id": "heavy_punch", "name": "重拳", "input": "5H", "startup": 9, "active": 3, "recovery": 16, "damage": 14, "hitstun": 20, "blockstun": 12, "cancelInto": [] },
+    { "id": "crouch_light", "name": "下段轻", "input": "2L", "startup": 4, "active": 2, "recovery": 8, "damage": 4, "hitstun": 12, "blockstun": 8, "cancelInto": ["crouch_mid"] },
+    { "id": "crouch_mid", "name": "下段中", "input": "2M", "startup": 6, "active": 2, "recovery": 12, "damage": 8, "hitstun": 16, "blockstun": 10, "cancelInto": ["fireball"] },
+    { "id": "fireball", "name": "波动拳", "input": "236L", "startup": 11, "active": 4, "recovery": 22, "damage": 12, "hitstun": 18, "blockstun": 12, "cancelInto": [] },
+    { "id": "uppercut", "name": "升龙", "input": "623H", "startup": 5, "active": 6, "recovery": 30, "damage": 18, "hitstun": 28, "blockstun": 14, "cancelInto": [] }
+  ]
+}

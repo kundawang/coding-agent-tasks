@@ -1,0 +1,8 @@
+{
+  "combos": [
+    { "id": "basic-1", "steps": ["5L", "5L", "5M"], "note": "三下基础连段" },
+    { "id": "basic-2", "steps": ["2L", "2M", "236L"], "note": "下段起手接波动" },
+    { "id": "basic-3", "steps": ["5L", "5M", "5H"], "note": "站姿三连" },
+    { "id": "anti-air", "steps": ["623H"], "note": "对空升龙" }
+  ]
+}
