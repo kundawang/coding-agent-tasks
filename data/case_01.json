@@ -1,0 +1,50 @@
+{
+  "case_id": "case_01",
+  "title": "后巷茶铺的账本",
+  "brief": "茶铺打烊后丢了当天的现钱，后门开着。三个人还在店里。",
+  "culprit": "xiaoke",
+  "evidence": {
+    "ledger":   {"name": "流水账本", "detail": "当天最后一笔记到 21:40，金额对不上。"},
+    "cup":      {"name": "摔碎的茶杯", "detail": "碎片在柜台内侧，杯底有鞋印。"},
+    "door":     {"name": "后门脚印", "detail": "泥脚印，尺码 42，鞋底纹是本地劳保鞋。"},
+    "camera":   {"name": "监控片段", "detail": "21:35-21:50 后巷有个人影，看不清脸。"},
+    "key":      {"name": "备用钥匙", "detail": "挂在里屋钉子上，少了一把。"}
+  },
+  "people": {
+    "zhoulan": {
+      "name": "周岚（店长）",
+      "alibi": "一直在里屋对账",
+      "nodes": [
+        {"id": "z1", "q": "打烊之后你在哪？", "a": "里屋对账，账本你也看到了，最后一笔 21:40。", "sets": ["zhoulan_inroom"]},
+        {"id": "z2", "q": "后门平时锁吗？", "a": "锁的，钥匙挂里屋。", "requires": ["zhoulan_inroom"], "sets": ["door_locked"]},
+        {"id": "z3", "q": "（出示备用钥匙）钥匙少了一把。", "requires_evidence": ["key"], "a": "……那串钥匙只有我和小柯碰过。", "sets": ["knew_key"]},
+        {"id": "z4", "q": "（出示碎茶杯）杯子怎么碎的？", "requires_evidence": ["cup"], "a": "我听见响了，出来看人就没了。", "sets": ["heard_crash"]}
+      ]
+    },
+    "xiaoke": {
+      "name": "小柯（学徒）",
+      "alibi": "说自己 21:30 就走了",
+      "nodes": [
+        {"id": "k1", "q": "你几点走的？", "a": "21:30，我从后门走的。", "sets": ["left_2130"]},
+        {"id": "k2", "q": "（出示监控）21:35 后巷还有个人影。", "requires_evidence": ["camera"], "a": "那可能……是我在锁门。", "sets": ["changed_story"]},
+        {"id": "k3", "q": "（出示后门脚印）42 码劳保鞋。", "requires_evidence": ["door"], "a": "店里就我穿这个码。", "sets": ["shoe_size"]},
+        {"id": "k4", "q": "（出示账本）账上少了一笔。", "requires_evidence": ["ledger"], "a": "账不是我记的。", "sets": ["denied_ledger"]},
+        {"id": "k5", "q": "（出示备用钥匙）钥匙少了一把。", "requires": ["knew_key", "changed_story"], "a": "……我只是想先把钱补上，明天再放回去。", "sets": ["confession"], "ending": "solved"}
+      ]
+    },
+    "laowei": {
+      "name": "老魏（常客）",
+      "alibi": "说自己在门口抽烟",
+      "nodes": [
+        {"id": "w1", "q": "你什么时候来的？", "a": "九点多来的，在门口抽了两根烟。", "sets": ["laowei_outside"]},
+        {"id": "w2", "q": "看见谁进出了吗？", "a": "看见小柯往后巷去过一趟。", "requires": ["laowei_outside"], "sets": ["saw_xiaoke"]}
+      ]
+    }
+  },
+  "endings": {
+    "solved":    {"name": "真相", "need_flags": ["confession"]},
+    "wrong":     {"name": "指错了人", "note": "指控对象不是 culprit 时触发"},
+    "unresolved":{"name": "证据不足", "note": "用完所有问话机会也没能定案"}
+  },
+  "limits": {"questions": 12}
+}

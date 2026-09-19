@@ -1,0 +1,15 @@
+{
+  "seed": 20260919,
+  "note": "一次审讯的操作日志；同 seed + 同操作要能得到同样的结局",
+  "actions": [
+    {"op": "ask", "person": "zhoulan", "node": "z1"},
+    {"op": "ask", "person": "zhoulan", "node": "z2"},
+    {"op": "ask", "person": "zhoulan", "node": "z3"},
+    {"op": "ask", "person": "xiaoke", "node": "k1"},
+    {"op": "ask", "person": "xiaoke", "node": "k2"},
+    {"op": "ask", "person": "xiaoke", "node": "k3"},
+    {"op": "ask", "person": "xiaoke", "node": "k4"},
+    {"op": "ask", "person": "xiaoke", "node": "k5"},
+    {"op": "accuse", "person": "xiaoke"}
+  ]
+}
