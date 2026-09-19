@@ -1,0 +1,7 @@
+{
+  "comments": [
+    { "file": "src/queue.js", "newLine": 38, "oldLine": 37, "side": "new", "body": "空队列时 misses 会累加，确认一下这个计数有人消费吗", "author": "me" },
+    { "file": "src/retry.js", "newLine": 6, "oldLine": null, "side": "new", "body": "每次重试之间没有退避，接口一抖动会连续打三下", "author": "me" },
+    { "file": "docs/notes.md", "newLine": 3, "oldLine": 2, "side": "new", "body": "这里的措辞和实际行为对不上", "author": "me" }
+  ]
+}
