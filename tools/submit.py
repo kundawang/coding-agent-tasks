@@ -455,6 +455,14 @@ def main():
             print("已取消。")
             return 1
 
+    # 文本/单选字段必须传纯字符串；早期版本打包成了 ["xxx"] 这种数组，飞书会报
+    # 800010407 "cell value does not match the expected input shape"。
+    def flatten(value):
+        if isinstance(value, list) and len(value) == 1 and isinstance(value[0], str):
+            return value[0]
+        return value
+
+    fields = {key: flatten(value) for key, value in fields.items()}
     payload = json.dumps(fields, ensure_ascii=False)
     lark([
         "base", "+record-upsert",
@@ -466,13 +474,18 @@ def main():
     print(f"字段已写入 {record_id}")
 
     for field_name, paths in attach.items():
+        # lark-cli 只收「当前目录下的相对路径」，这里统一转一下
+        rel_paths = []
+        for path in paths:
+            rel = os.path.relpath(path, os.getcwd())
+            rel_paths.append(path if rel.startswith("..") else rel)
         lark([
             "base", "+record-upload-attachment",
             "--base-token", cfg["base_token"],
             "--table-id", cfg["table_id"],
             "--record-id", record_id,
             "--field-id", field_name,
-            *[arg for path in paths for arg in ("--file", path)],
+            *[arg for path in rel_paths for arg in ("--file", path)],
         ])
         print(f"附件已上传 {field_name}: {', '.join(os.path.basename(p) for p in paths)}")
 
