@@ -1,0 +1,9 @@
+{
+  "name": "neon-commute",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test/logic.test.mjs",
+    "serve": "node serve.mjs"
+  }
+}

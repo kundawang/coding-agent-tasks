@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Commute · 年会打歌赛</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 游戏画布（始终全窗口，菜单等界面盖在上面） -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- 主菜单 -->
+  <section id="screen-menu" class="screen">
+    <h1>NEON COMMUTE</h1>
+    <p class="sub">年会午休打歌赛 · D F J K</p>
+    <div class="menu-buttons">
+      <button id="btn-start" class="primary">开始打歌</button>
+      <button id="btn-calibrate">校准键盘延迟</button>
+      <button id="btn-board">排行榜</button>
+    </div>
+    <p id="calib-status" class="hint"></p>
+    <p class="hint">判定窗口：Perfect ±30ms · Great ±60ms · Good ±100ms　|　Esc 暂停</p>
+  </section>
+
+  <!-- 校准 -->
+  <section id="screen-calib" class="screen hidden">
+    <h2>键盘延迟校准</h2>
+    <p class="hint">听鼓点，跟着 <b>最后 4 声</b> 高音节拍，每声敲一下任意键（D/F/J/K 都行）。<br>
+      前两声是预备拍，不计入。</p>
+    <div id="calib-pulse"></div>
+    <p id="calib-info" class="hint"></p>
+    <div class="menu-buttons">
+      <button id="btn-calib-go" class="primary">开始校准</button>
+      <button id="btn-calib-back">返回</button>
+    </div>
+  </section>
+
+  <!-- 结算 -->
+  <section id="screen-result" class="screen hidden">
+    <h2>成绩</h2>
+    <div id="result-table" class="result-grid"></div>
+    <div class="save-row">
+      <input id="input-name" maxlength="24" placeholder="留个名字上榜">
+      <button id="btn-save" class="primary">保存成绩</button>
+    </div>
+    <p id="save-hint" class="hint"></p>
+    <div class="menu-buttons">
+      <button id="btn-retry">再来一把</button>
+      <button id="btn-result-menu">回主菜单</button>
+    </div>
+  </section>
+
+  <!-- 排行榜 -->
+  <section id="screen-board" class="screen hidden">
+    <h2>排行榜</h2>
+    <table id="board-table">
+      <thead>
+        <tr><th>#</th><th>名字</th><th>分数</th><th>准确率</th><th>最大连击</th><th>校准</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="menu-buttons">
+      <button id="btn-export">导出 JSON</button>
+      <button id="btn-import">导入合并</button>
+      <button id="btn-board-back">返回</button>
+    </div>
+    <textarea id="board-json" class="hidden" placeholder="导出的 JSON 会显示在这里；把别人的 JSON 贴进来点「导入合并」即可"></textarea>
+  </section>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
