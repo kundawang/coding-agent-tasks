@@ -1,0 +1,21 @@
+{
+  "conditions": {
+    "always":          {"args": [], "说明": "每个 tick 都成立"},
+    "enemy_within":    {"args": ["distance"], "说明": "最近的敌人在该距离内（按格）"},
+    "hp_below":        {"args": ["ratio"], "说明": "自身血量低于比例 0-1"},
+    "energy_above":    {"args": ["value"], "说明": "自身能量高于该值"},
+    "weapon_ready":    {"args": [], "说明": "武器冷却结束"},
+    "wall_ahead":      {"args": ["distance"], "说明": "前进方向该距离内有障碍"}
+  },
+  "actions": {
+    "move":    {"args": ["forward|back|left|right"], "说明": "以 move_speed 沿该方向移动一个 tick"},
+    "turn":    {"args": ["left|right"], "说明": "以 turn_speed 转向一个 tick"},
+    "face":    {"args": ["enemy"], "说明": "朝最近敌人转向一个 tick"},
+    "fire":    {"args": [], "说明": "武器就绪且敌人在射程内则开火"},
+    "wait":    {"args": [], "说明": "什么都不做，攒能量"},
+    "charge":  {"args": [], "说明": "停一 tick，恢复 2 点能量"}
+  },
+  "program_shape": [
+    {"when": "<condition>", "args": ["..."], "then": [{"op": "<action>", "args": ["..."]}]}
+  ]
+}

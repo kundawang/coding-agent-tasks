@@ -1,0 +1,9 @@
+{
+  "tick_rate": 10,
+  "match_ticks": 600,
+  "robots": {
+    "scrapper": {"name": "拾荒者", "hp": 60,  "energy": 20, "move_speed": 2.0, "turn_speed": 90, "sensor": 6, "weapon": {"damage": 8,  "range": 5, "cooldown": 5}},
+    "lancer":   {"name": "长矛手", "hp": 80,  "energy": 16, "move_speed": 1.4, "turn_speed": 60, "sensor": 8, "weapon": {"damage": 14, "range": 4, "cooldown": 8}},
+    "spark":    {"name": "电火花", "hp": 45,  "energy": 26, "move_speed": 2.6, "turn_speed": 120, "sensor": 5, "weapon": {"damage": 5,  "range": 3, "cooldown": 3}}
+  }
+}

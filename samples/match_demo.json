@@ -1,0 +1,20 @@
+{
+  "seed": 20260919,
+  "note": "同一份程序 + 同一个 seed，跑出来的对战过程必须完全一致",
+  "player": {
+    "robot": "scrapper",
+    "program": [
+      {"when": "wall_ahead", "args": [1], "then": [{"op": "turn", "args": ["right"]}]},
+      {"when": "enemy_within", "args": [5], "then": [{"op": "face", "args": ["enemy"]}, {"op": "fire", "args": []}]},
+      {"when": "always", "args": [], "then": [{"op": "move", "args": ["forward"]}]}
+    ]
+  },
+  "enemy": {
+    "robot": "lancer",
+    "program": [
+      {"when": "hp_below", "args": [0.35], "then": [{"op": "move", "args": ["back"]}]},
+      {"when": "enemy_within", "args": [4], "then": [{"op": "face", "args": ["enemy"]}, {"op": "fire", "args": []}]},
+      {"when": "always", "args": [], "then": [{"op": "move", "args": ["forward"]}]}
+    ]
+  }
+}
