@@ -4,7 +4,7 @@
 用法（默认只预览，不写表）：
 
     uv run python tools/submit.py T003                 # 预览将要写入的字段
-    uv run python tools/submit.py T003 --uid 141       # 指定表里的 UID 行
+    uv run python tools/submit.py T003 --uid 14X       # 指定表里的 UID 行
     uv run python tools/submit.py T003 --record-id recXXXX
     uv run python tools/submit.py T003 --write         # 真正写表
     uv run python tools/submit.py T003 --write --yes   # 跳过二次确认

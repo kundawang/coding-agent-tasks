@@ -41,7 +41,7 @@ SIDES = ("A", "B")
 PROMPT_DIR_NAME = "prompt原文"
 
 # 题目工作区默认放这里： <桌面>/GSB题目/<题号>/
-TASKS_DIR_NAME = "GSB题目"
+TASKS_DIR_NAME = os.environ.get("GSB_TASKS_DIR") or "GSB题目"
 
 # 每道题一个标签颜色，四个窗口一眼分得开
 LAUNCH_COLORS = ["#8e44ad", "#d35400", "#16a085", "#c2185b",
@@ -99,7 +99,7 @@ def remote_slug():
             slug = slug[len(prefix):]
             break
     else:
-        # 远端 URL 里带了用户名或端口，例如 https://kundawang@github.com/o/r
+        # 远端 URL 里带了用户名或端口，例如 https://someone@github.com/o/r
         match = re.search(r"github\.com[:/]+(.+)$", slug)
         if not match:
             return None, None
@@ -171,7 +171,7 @@ def desktop_dir():
 
 
 def prompt_copy_path(task_id, meta):
-    """桌面副本的路径：<桌面>/prompt原文/T007-emberdeck.txt"""
+    """桌面副本的路径：<桌面>/prompt原文/<题目号>-<项目名>.txt"""
     title = (meta.get("title") or "").strip()
     slug = title.split()[0] if title else task_id.lower()
     return os.path.join(desktop_dir(), PROMPT_DIR_NAME, f"{task_id.upper()}-{slug}.txt")
@@ -244,11 +244,19 @@ def ensure_workspace_repo(workspace):
     if not is_git_repo(workspace):
         git("init", "-q", "-b", "main", cwd=workspace)
         if not git("config", "user.name", cwd=workspace, check=False):
-            git("config", "user.name", "kundawang", cwd=workspace)
-            git("config", "user.email", "kundawang@users.noreply.github.com", cwd=workspace)
+            name, email = default_git_identity()
+            git("config", "user.name", name, cwd=workspace)
+            git("config", "user.email", email, cwd=workspace)
         commit_all("initial environment", cwd=workspace)
         return True
     return False
+
+
+def default_git_identity():
+    """工作区自己的 git 身份：优先用全局配置，没有就给个中性占位。"""
+    name = git("config", "--global", "user.name", check=False).strip()
+    email = git("config", "--global", "user.email", check=False).strip()
+    return name or "task-author", email or "task-author@example.com"
 
 
 def is_git_repo(path):

@@ -10,8 +10,8 @@
     uv run python tools/push.py --tries 8 --delay 6
 
 HTTPS 连不上 github.com:443 时会自动改走 SSH（ssh.github.com:443）。
-走 SSH 需要先把 ~/.ssh/id_ed25519_kundawang.pub 加到 GitHub 账号的 SSH keys 里：
-    https://github.com/settings/ssh/new
+走 SSH 需要先把自己的公钥加到 GitHub 账号的 SSH keys 里：https://github.com/settings/ssh/new
+密钥路径默认取 ~/.ssh/id_ed25519，也可以用环境变量 GSB_SSH_KEY 指定。
 """
 
 import argparse
@@ -24,8 +24,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import task as task_mod  # noqa: E402
 
-SSH_KEY = os.path.join(os.path.expanduser("~"), ".ssh", "id_ed25519_kundawang")
-SSH_URL = "git@github.com:kundawang/coding-agent-tasks.git"
+SSH_KEY = os.environ.get("GSB_SSH_KEY") or os.path.join(os.path.expanduser("~"), ".ssh", "id_ed25519")
+
+
+def ssh_url():
+    owner, name = task_mod.remote_slug()
+    return f"git@github.com:{owner}/{name}.git" if owner else ""
 
 
 def ssh_ready():
@@ -45,7 +49,7 @@ def push_once(refs, via_ssh=False):
     if via_ssh:
         cmd += ["-c", f"core.sshCommand=ssh -i {SSH_KEY} -o HostName=ssh.github.com "
                       f"-o Port=443 -o StrictHostKeyChecking=accept-new"]
-    cmd += ["push", "-u", "origin" if not via_ssh else SSH_URL, *refs]
+    cmd += ["push", "-u", "origin" if not via_ssh else ssh_url(), *refs]
     proc = subprocess.run(
         cmd,
         cwd=task_mod.REPO, capture_output=True, text=True,
